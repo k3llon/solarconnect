@@ -12,18 +12,72 @@ const app = {
   lessonId: null,
   lessonIndex: 0,
   onbStep: 1,
+  lang: 'de',
 
-  problemLabels: {
-    power_outage: 'Kein Strom', battery_issue: 'Batterie-Problem',
-    panel_damage: 'Panel kaputt', inverter_issue: 'Wechselrichter',
-    wiring_issue: 'Kabel / Leitung', other: 'Sonstiges'
+  // ===== i18n =====
+  t(key, vars = {}) {
+    const entry = I18N[key];
+    let str = (entry && (entry[this.lang] || entry.de)) || key;
+    for (const [k, v] of Object.entries(vars)) {
+      str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), v);
+    }
+    return str;
   },
-  severityLabels: { low: 'Nicht dringend', medium: 'Mittel', high: 'Dringend' },
-  statusLabels:   { open: 'Offen', progress: 'In Arbeit', resolved: 'Behoben' },
+
+  // Resolve multilingual object {de:..., en:..., hi:...} → string
+  L(o) {
+    if (o == null) return '';
+    if (typeof o === 'string') return o;
+    return o[this.lang] || o.de || o.en || Object.values(o)[0] || '';
+  },
+
+  applyI18n(root) {
+    const scope = root || document;
+    scope.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      el.innerHTML = this.t(key);
+    });
+    scope.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      el.setAttribute('placeholder', this.t(el.getAttribute('data-i18n-ph')));
+    });
+    scope.querySelectorAll('[data-i18n-aria]').forEach(el => {
+      el.setAttribute('aria-label', this.t(el.getAttribute('data-i18n-aria')));
+    });
+    document.documentElement.lang = this.lang;
+  },
+
+  async setLang(code) {
+    this.lang = code;
+    this.selectedLang = code;
+    await db.setSetting('language', code);
+    this.applyI18n();
+    // re-render whatever view is active so dynamic strings update
+    this.showView(this.currentView);
+  },
+
+  get problemLabels() {
+    return {
+      power_outage:   this.t('prob.power_outage'),
+      battery_issue:  this.t('prob.battery_issue'),
+      panel_damage:   this.t('prob.panel_damage'),
+      inverter_issue: this.t('prob.inverter_issue'),
+      wiring_issue:   this.t('prob.wiring_issue'),
+      other:          this.t('prob.other')
+    };
+  },
+  get severityLabels() {
+    return { low: this.t('rep.urgency.low'), medium: this.t('rep.urgency.medium'), high: this.t('rep.urgency.high') };
+  },
+  get statusLabels() {
+    return { open: this.t('st.open'), progress: this.t('st.progress'), resolved: this.t('st.resolved') };
+  },
 
   // ===== INIT =====
   async init() {
     await db.open();
+    const storedLang = await db.getSetting('language');
+    if (storedLang) this.lang = storedLang;
+    this.applyI18n();
     await this.loadSettings();
     await this.seedAll();
     this.applyTheme();
@@ -50,6 +104,8 @@ const app = {
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     this.selectedLang = btn.dataset.lang;
+    this.lang = btn.dataset.lang;
+    this.applyI18n();
   },
 
   async onbFinish() {
@@ -1030,6 +1086,8 @@ const app = {
       document.getElementById('community-name').textContent = community + (state ? ', ' + state : '');
       const ci = document.getElementById('setting-community');
       if (ci) ci.value = community;
+    } else {
+      document.getElementById('community-name').textContent = this.t('app.community.default');
     }
     if (state) {
       const si = document.getElementById('setting-state');
@@ -1077,15 +1135,19 @@ const app = {
     if (community) await db.setSetting('community_name', community);
     await db.setSetting('state', state);
     await db.setSetting('role', this.selectedRole);
-    await db.setSetting('language', language);
     await db.setSetting('contrast', contrast);
     await db.setSetting('large', large);
 
     document.body.classList.toggle('contrast', contrast);
     document.body.classList.toggle('large', large);
-    await this.loadSettings();
 
-    this.showToast('Einstellungen gespeichert');
+    if (language !== this.lang) {
+      await this.setLang(language);   // applies + re-renders
+    } else {
+      await this.loadSettings();
+    }
+
+    this.showToast(this.t('set.saved'));
     if (navigator.vibrate) navigator.vibrate(30);
   },
 
