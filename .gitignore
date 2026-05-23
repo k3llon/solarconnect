@@ -1,7 +1,12 @@
-__pycache__/
-*.pyc
-.venv/
-venv/
-.env
+# macOS
 .DS_Store
-.streamlit/secrets.toml
+
+# Editor
+.vscode/
+.idea/
+
+# Vercel
+.vercel/
+
+# Logs
+*.log

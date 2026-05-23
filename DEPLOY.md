@@ -1,105 +1,117 @@
-# SolarConnect — Streamlit Deployment
+# SolarConnect — Deployment auf Vercel
 
-Die App läuft auch ohne Änderungen unverändert als Streamlit-App.
-Streamlit dient nur als Wrapper: `streamlit_app.py` packt die bestehenden
-HTML/CSS/JS-Dateien in eine einzelne `components.html()`-Komponente.
+Die App ist eine reine statische PWA (HTML/CSS/JS) — kein Backend, kein
+Build-Step nötig. Vercel deployt sie out-of-the-box.
 
-Design, Funktionalität, KI-Chat, Foto-Upload und IndexedDB bleiben
-identisch.
+Funktioniert nach dem Deploy:
+- ✅ Vollbild wie eine echte Smartphone-App
+- ✅ Service Worker → echter Offline-Modus
+- ✅ PWA installierbar („Zum Home-Bildschirm hinzufügen")
+- ✅ HTTPS automatisch (nötig für Kamera-Zugriff)
+- ✅ Custom Domain möglich
+- ✅ Auto-Deploy bei jedem `git push`
 
 ---
 
-## 1. Lokal testen
+## Variante A — Vercel CLI (schnell, ohne GitHub)
 
 ```bash
-# Im Projekt-Verzeichnis
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run streamlit_app.py
+npm install -g vercel        # falls noch nicht installiert
+cd /Users/fabianhubner/Documents/IT/Claude/solarconnect
+vercel                       # einmalig: Login + Projekt anlegen
+vercel --prod                # Production-Deploy
 ```
 
-Streamlit öffnet automatisch `http://localhost:8501`.
+Vercel druckt am Ende die URL, z.B. `https://solarconnect.vercel.app`.
 
-> **Hinweis:** Beim ersten Aufruf führt die App das Onboarding aus,
-> seedet indische Demo-Daten und legt eine eigene IndexedDB im Browser
-> an. Beim Neustart bleiben die Daten erhalten.
+> Beim ersten `vercel`-Aufruf fragt das CLI:
+> - „Set up and deploy?" → **Y**
+> - „Which scope?" → dein Account
+> - „Link to existing project?" → **N**
+> - „What's your project's name?" → `solarconnect`
+> - „In which directory is your code located?" → `./` (Enter)
+> - „Want to modify settings?" → **N**
 
 ---
 
-## 2. Streamlit Community Cloud (kostenlos)
+## Variante B — Via GitHub (empfohlen für Master-Projekt)
 
-### Voraussetzungen
-- GitHub-Account
-- Projekt liegt in einem GitHub-Repo
+Vorteile: Auto-Deploy, Preview-URLs pro Branch, sichtbare Commit-Historie.
 
-### Schritte
-
-1. **Repo zu GitHub pushen** (falls noch nicht geschehen)
+1. **Repo zu GitHub pushen**
    ```bash
+   cd /Users/fabianhubner/Documents/IT/Claude/solarconnect
    git init
    git add .
-   git commit -m "Initial SolarConnect"
+   git commit -m "SolarConnect v2 — India Edition mit Surya AI"
    git branch -M main
    git remote add origin https://github.com/<dein-user>/solarconnect.git
    git push -u origin main
    ```
 
-2. **Streamlit Cloud öffnen**: <https://share.streamlit.io>
+2. **Vercel öffnen**: <https://vercel.com/new>
    - Mit GitHub einloggen
-   - Klick auf **„New app"**
+   - „Import Git Repository" → das `solarconnect`-Repo wählen
 
-3. **Konfiguration**
-   - Repository: `<dein-user>/solarconnect`
-   - Branch: `main`
-   - **Main file path**: `streamlit_app.py`
-   - (Optional) eigene URL wählen, z.B. `solarconnect.streamlit.app`
+3. **Configure Project**
+   - Framework Preset: **Other** (Vercel erkennt es als statische Site)
+   - Root Directory: `./`
+   - Build Command: *(leer lassen)*
+   - Output Directory: *(leer lassen)*
 
-4. **Deploy klicken** — der Build dauert ca. 1 Minute.
+4. **Deploy** klicken — Build dauert ~30 Sekunden.
 
-Die App ist anschließend unter deiner Streamlit-URL erreichbar.
-Automatischer Re-Deploy bei jedem `git push` auf `main`.
-
----
-
-## 3. Was sich im Streamlit-Kontext unterscheidet
-
-| Feature             | Status        | Hinweis |
-|---------------------|---------------|---------|
-| Layout & Design     | ✅ Identisch  | Inline-CSS, gleicher Look |
-| Bottom-Navigation   | ✅ Identisch  | `position: fixed` im iframe |
-| IndexedDB-Storage   | ✅ Funktioniert | Per Browser-Origin persistiert |
-| KI-Chat (Surya AI)  | ✅ Funktioniert | Lokale Knowledge-Engine |
-| Foto-Upload + Vision| ✅ Funktioniert | Canvas-Analyse läuft im iframe |
-| Offline-Modus       | ⚠ Teilweise   | Service Worker im iframe deaktiviert — IndexedDB bleibt aber persistent |
-| PWA-Installation    | ❌            | Browser kann iframe-App nicht als PWA installieren |
-
-Die App nutzt im normalen statischen Hosting weiterhin den Service Worker.
-Nur in der Streamlit-Variante wird er übersprungen.
+Ergebnis: URL wie `https://solarconnect.vercel.app`.
+Jeder weitere `git push` deployt automatisch.
 
 ---
 
-## 4. Alternative Hosts
+## Eigene Domain (optional)
 
-Da die App reines HTML/CSS/JS ist, läuft sie ohne Modifikation auch auf:
-- **GitHub Pages** (einfach Repo zu Pages aktivieren — `index.html` ist Entry)
-- **Vercel** / **Netlify** / **Cloudflare Pages** (Drag & Drop)
-- **Jeder beliebige Static-File-Host**
-
-Bei diesen funktioniert auch der Service Worker und die PWA-Installation.
+Im Vercel-Dashboard → Project → Settings → Domains → Domain hinzufügen.
+DNS-Records werden angezeigt — bei deinem Domain-Provider eintragen.
+HTTPS wird automatisch über Let's Encrypt eingerichtet.
 
 ---
 
-## 5. Troubleshooting
+## Konfiguration
 
-**App-Höhe wirkt zu klein**
-Passe in `streamlit_app.py` den Wert `height=920` an die gewünschte
-iframe-Höhe an (z.B. `height=1100`).
+In `vercel.json` ist bereits eingestellt:
+- **Service Worker** wird nicht gecached (`sw.js` mit `max-age=0`) — verhindert eingefrorene App-Version
+- **Statische Assets** (JS/CSS/SVG) werden 1 Jahr immutable gecached
+- **index.html** und `manifest.json` ebenfalls always-fresh
+
+---
+
+## Lokal testen (vor dem Deploy)
+
+```bash
+cd /Users/fabianhubner/Documents/IT/Claude/solarconnect
+python3 -m http.server 8000
+# → http://localhost:8000
+```
+
+Oder mit Vercel CLI:
+```bash
+vercel dev
+# → http://localhost:3000
+```
+
+---
+
+## Troubleshooting
+
+**Service Worker zeigt alte Version**
+→ Im Browser DevTools → Application → Service Workers → „Unregister"
+und einmal Hard-Reload (Cmd+Shift+R).
 
 **Kamera funktioniert nicht**
-Browser benötigt HTTPS für Kamera-Zugriff. Streamlit Cloud liefert
-automatisch HTTPS aus. Lokal über `localhost` funktioniert es ebenfalls.
+→ Geht nur über HTTPS oder `localhost`. Vercel liefert immer HTTPS.
 
 **Daten weg nach Reload**
-Das passiert nur, wenn der Browser den Speicher für die Origin gelöscht
-hat. IndexedDB ist normalerweise persistent.
+→ IndexedDB ist normalerweise persistent pro Origin. Inkognito-Tabs
+löschen alles beim Schließen.
+
+**404 auf bestimmten Routen**
+→ `cleanUrls: true` in `vercel.json` schaltet die `.html`-Extension ab.
+Falls Probleme: das Flag entfernen.
