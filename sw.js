@@ -1,10 +1,11 @@
-const CACHE_NAME = 'solarconnect-v2';
+const CACHE_NAME = 'solarconnect-v3';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/content.js',
   './js/charts.js',
+  './js/ai.js',
   './js/db.js',
   './js/app.js',
   './manifest.json',

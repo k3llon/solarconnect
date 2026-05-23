@@ -109,7 +109,7 @@ const app = {
     // If sub-view, highlight parent tab
     const parentMap = {
       report: 'support', history: 'support', ticket: 'support', technicians: 'support', appointments: 'support',
-      wizard: 'selfhelp', article: 'selfhelp',
+      wizard: 'selfhelp', article: 'selfhelp', ai: 'selfhelp',
       device: 'system', analytics: 'system',
       community: 'more', learning: 'more', lesson: 'more', alerts: 'more', settings: 'more'
     };
@@ -126,7 +126,7 @@ const app = {
       technicians: 'loadTechnicians', community: 'loadCommunity',
       learning: 'loadLearning', alerts: 'loadAlerts',
       appointments: 'loadAllAppts', analytics: 'loadAnalytics',
-      report: 'resetReportForm'
+      report: 'resetReportForm', ai: 'loadChat'
     };
     if (loaders[name] && this[loaders[name]]) this[loaders[name]]();
     window.scrollTo(0, 0);
@@ -1110,6 +1110,153 @@ const app = {
     for (const r of unsynced) { r.synced = true; await db.updateReport(r); }
     console.log(`[sync] ${unsynced.length} reports`);
   },
+
+  // ============================================================
+  // ===== AI ASSISTANT (Surya AI) =====
+  // ============================================================
+  openAi() { this.showView('ai'); },
+
+  async loadChat() {
+    const history = (await db.getChats()).sort((a,b) => a.timestamp - b.timestamp);
+    const container = document.getElementById('chat-messages');
+
+    if (!history.length) {
+      container.innerHTML = `
+        <div class="chat-empty">
+          <div class="ce-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"/><path d="M8 11h.01"/><path d="M16 11h.01"/>
+              <path d="M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/><path d="M12 3v3"/>
+            </svg>
+          </div>
+          <h3>${this.escapeHtml(AI.name)}</h3>
+          <p>${this.escapeHtml(AI.greeting)}</p>
+        </div>`;
+    } else {
+      container.innerHTML = history.map(m => this.renderBubble(m)).join('');
+    }
+
+    // Suggestions
+    this.renderSuggestions(history.length ? AI.suggestions.slice(0,4) : AI.suggestions);
+    setTimeout(() => this.scrollChatToBottom(), 30);
+    document.getElementById('chat-input').focus();
+  },
+
+  renderBubble(m) {
+    if (m.role === 'user') {
+      return `<div class="bubble bubble-user">${this.escapeHtml(m.text)}</div>`;
+    }
+    // AI bubble — supports basic markdown bold (**text**) → strong
+    const formatted = this.escapeHtml(m.text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    const sources = (m.sources || []).map(s => {
+      const cls = s.type === 'emergency' ? 'source-chip danger' : 'source-chip';
+      return `<button class="${cls}" onclick="app.aiSourceClick('${s.type}','${s.id}')">${this.escapeHtml(s.label)}</button>`;
+    }).join('');
+    return `<div class="bubble bubble-ai ${m.emergency ? 'emergency' : ''}">${formatted}${sources ? `<div class="bubble-sources">${sources}</div>` : ''}</div>`;
+  },
+
+  renderSuggestions(list) {
+    const c = document.getElementById('chat-suggestions');
+    if (!list || !list.length) { c.innerHTML = ''; return; }
+    c.innerHTML = list.map(s => `<button class="sug-chip" onclick="app.chatSendText('${this.escapeAttr(s)}')">${this.escapeHtml(s)}</button>`).join('');
+  },
+
+  chatKey(e) {
+    if (e.key === 'Enter') { e.preventDefault(); this.chatSend(); }
+  },
+
+  chatSend() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    this.chatSendText(text);
+  },
+
+  async chatSendText(text) {
+    // remove empty state if visible
+    const container = document.getElementById('chat-messages');
+    const empty = container.querySelector('.chat-empty');
+    if (empty) container.innerHTML = '';
+
+    // user message
+    const userMsg = {
+      id: 'm_' + Date.now(),
+      role: 'user',
+      text,
+      timestamp: Date.now()
+    };
+    await db.addChat(userMsg);
+    container.insertAdjacentHTML('beforeend', this.renderBubble(userMsg));
+    this.scrollChatToBottom();
+    if (navigator.vibrate) navigator.vibrate(15);
+
+    // typing indicator
+    document.getElementById('chat-suggestions').innerHTML = '';
+    const typingEl = document.createElement('div');
+    typingEl.className = 'typing';
+    typingEl.id = 'typing-indicator';
+    typingEl.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>';
+    container.appendChild(typingEl);
+    this.scrollChatToBottom();
+
+    // simulate thinking
+    const thinking = 600 + Math.random() * 700;
+    setTimeout(async () => {
+      const resp = AI.respond(text);
+
+      const aiMsg = {
+        id: 'm_' + Date.now() + '_a',
+        role: 'ai',
+        text: resp.text,
+        sources: resp.sources || [],
+        emergency: resp.emergency || false,
+        timestamp: Date.now()
+      };
+
+      // Auto-create report on escalation
+      if (resp.escalate) {
+        const reportId = await this.autoCreateReport(
+          resp.escalate.type,
+          resp.escalate.severity,
+          `Aus KI-Chat: "${text.slice(0,80)}"`
+        );
+        aiMsg.sources = [...(aiMsg.sources || []), { type: 'ticket', id: reportId, label: '🎫 Ticket öffnen' }];
+        if (resp.escalate.emergency) {
+          aiMsg.sources.push({ type: 'emergency', id: 'now', label: '⚠ Notfall-Modus' });
+        }
+      }
+
+      await db.addChat(aiMsg);
+      document.getElementById('typing-indicator')?.remove();
+      container.insertAdjacentHTML('beforeend', this.renderBubble(aiMsg));
+      this.scrollChatToBottom();
+      this.renderSuggestions(resp.quickReplies || []);
+      if (navigator.vibrate) navigator.vibrate(20);
+    }, thinking);
+  },
+
+  aiSourceClick(type, id) {
+    if (navigator.vibrate) navigator.vibrate(15);
+    if (type === 'wizard')    return this.startWizard(id);
+    if (type === 'article')   return this.openArticle(id);
+    if (type === 'ticket')    return this.openTicket(id);
+    if (type === 'view')      return this.showView(id);
+    if (type === 'emergency') return this.emergency();
+  },
+
+  async clearChat() {
+    if (!confirm('Chat-Verlauf löschen?')) return;
+    await db.clearChats();
+    this.loadChat();
+  },
+
+  scrollChatToBottom() {
+    const c = document.getElementById('chat-messages');
+    if (c) c.scrollTop = c.scrollHeight;
+  },
+
+  escapeAttr(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); },
 
   // ===== UTIL =====
   showToast(msg) {
