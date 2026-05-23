@@ -275,7 +275,19 @@
 
       <div id="chat-suggestions" class="chat-suggestions"></div>
 
+      <div id="chat-preview" class="chat-preview hidden">
+        <img id="chat-preview-img" alt="Vorschau">
+        <button class="preview-remove" onclick="app.removePreview()" aria-label="Entfernen">×</button>
+      </div>
+
       <div class="chat-input-row">
+        <label class="chat-attach" for="chat-file" aria-label="Foto anhängen">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </label>
+        <input type="file" id="chat-file" accept="image/*" capture="environment" onchange="app.onChatFile(event)" hidden>
         <input type="text" id="chat-input" placeholder="Frag Surya AI..." onkeydown="app.chatKey(event)">
         <button class="chat-send" onclick="app.chatSend()" aria-label="Senden">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>

@@ -227,5 +227,216 @@ const AI = {
     if (concepts.includes('install')) return ['Welche Kosten?', 'Welche Förderung?'];
     if (concepts.includes('cost'))    return ['Welche Förderung?', 'Was kostet eine Batterie?'];
     return ['Ist das sicher?', 'Soll ich Techniker rufen?'];
+  },
+
+  // ============================================================
+  // VISION — Canvas-basierte lokale Bildanalyse
+  // Funktioniert offline, keine externe API.
+  // ============================================================
+
+  // Lädt Bild, sampelt Pixel und erzeugt eine Feature-Beschreibung
+  analyzeImage(imageDataUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const w = 120;  // Downsample für schnelle Analyse
+        const h = Math.round(img.height * (w / img.width));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const pixels = ctx.getImageData(0, 0, w, h).data;
+
+        const stats = this._extractStats(pixels, w, h);
+        const features = this._classifyFeatures(stats);
+        resolve({ stats, features, dimensions: { width: img.width, height: img.height } });
+      };
+      img.onerror = () => resolve({ stats: null, features: ['unreadable'], dimensions: null });
+      img.src = imageDataUrl;
+    });
+  },
+
+  _extractStats(pixels, w, h) {
+    let rSum = 0, gSum = 0, bSum = 0;
+    let brightSum = 0, satSum = 0;
+    let darkCount = 0, brightCount = 0;
+    let redCount = 0, greenCount = 0, blueCount = 0, yellowCount = 0;
+    let varSum = 0;
+    let total = 0;
+
+    // Sample every pixel (120 wide is small enough)
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i], g = pixels[i+1], b = pixels[i+2];
+      rSum += r; gSum += g; bSum += b;
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      const brightness = (r + g + b) / 3;
+      const sat = max === 0 ? 0 : (max - min) / max;
+      brightSum += brightness;
+      satSum += sat;
+      if (brightness < 50) darkCount++;
+      if (brightness > 220) brightCount++;
+      // Color buckets: only count "saturated enough" pixels
+      if (sat > 0.35 && max > 80) {
+        if (r > g + 30 && r > b + 30) redCount++;
+        else if (g > r + 25 && g > b + 25) greenCount++;
+        else if (b > r + 25 && b > g + 25) blueCount++;
+        else if (r > 150 && g > 130 && b < 100) yellowCount++;
+      }
+      total++;
+    }
+
+    // Variance (rough texture / contrast indicator)
+    const avgBright = brightSum / total;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const b = (pixels[i] + pixels[i+1] + pixels[i+2]) / 3;
+      varSum += (b - avgBright) ** 2;
+    }
+    const variance = varSum / total;
+
+    return {
+      avgR: rSum / total, avgG: gSum / total, avgB: bSum / total,
+      brightness: avgBright,
+      saturation: satSum / total,
+      darkRatio: darkCount / total,
+      brightRatio: brightCount / total,
+      redRatio: redCount / total,
+      greenRatio: greenCount / total,
+      blueRatio: blueCount / total,
+      yellowRatio: yellowCount / total,
+      contrast: Math.sqrt(variance)
+    };
+  },
+
+  _classifyFeatures(s) {
+    if (!s) return ['unreadable'];
+    const features = [];
+
+    // Quality
+    if (s.brightness < 40)  features.push('too_dark');
+    if (s.brightness > 230) features.push('overexposed');
+    if (s.contrast  < 12)   features.push('low_contrast');
+
+    // Solar-relevante Erkennungen
+    if (s.redRatio > 0.012)    features.push('red_indicator');   // Rote LED / Warnung
+    if (s.greenRatio > 0.015)  features.push('green_indicator'); // Grüne LED / OK
+    if (s.yellowRatio > 0.02)  features.push('yellow_indicator');// Gelb / Warnung
+
+    // Panel-Detektion: dunkle Fläche mit metallischen Reflexen
+    if (s.brightness < 80 && s.contrast > 30 && s.saturation < 0.25) features.push('panel_like');
+    // Verschmutzung: dunkler, niedriger Kontrast, leicht bräunlich
+    if (s.brightness < 100 && s.contrast < 25 && s.avgR > s.avgB && s.saturation < 0.2) features.push('possibly_dirty');
+    // Inverter / Gehäuse: heller Grauton, niedrige Sättigung, mittlere Helligkeit
+    if (s.brightness > 100 && s.brightness < 200 && s.saturation < 0.15) features.push('device_housing');
+    // Verkabelung: viele dunkle Linien — proxy: hoher Kontrast, mittlere Helligkeit
+    if (s.contrast > 50 && s.brightness > 60 && s.brightness < 180 && s.saturation < 0.3) features.push('cable_like');
+    // Outdoor / Himmel: viel Blau und hell
+    if (s.blueRatio > 0.03 && s.brightness > 150) features.push('outdoor_sky');
+    // Rauch / Nebel: weiß-grau, geringe Sättigung, hohe Helligkeit
+    if (s.brightness > 180 && s.saturation < 0.1 && s.contrast < 30) features.push('hazy');
+    // Glasbruch-Verdacht: sehr hoher Kontrast + helle Bereiche
+    if (s.contrast > 80 && s.brightRatio > 0.1) features.push('high_contrast_spots');
+
+    if (!features.length) features.push('generic');
+    return features;
+  },
+
+  // Erzeugt eine deutsche Beschreibung der Bildanalyse + Diagnose
+  describeImage(analysis, userText = '') {
+    const f = analysis.features;
+    const stats = analysis.stats;
+
+    // Bild unbrauchbar
+    if (f.includes('unreadable')) {
+      return {
+        text: '📷 Ich konnte das Bild leider nicht lesen. Bitte versuche es nochmal mit einem anderen Bild.',
+        sources: [], emergency: false, escalate: null,
+        quickReplies: ['Anderes Bild senden', 'Problem in Worten beschreiben']
+      };
+    }
+
+    // Quality warnings first
+    const qualityWarns = [];
+    if (f.includes('too_dark'))     qualityWarns.push('🔦 Das Bild ist sehr dunkel. Mach gerne ein neues mit besserem Licht — dann sehe ich mehr Details.');
+    if (f.includes('overexposed'))  qualityWarns.push('☀ Das Bild ist überbelichtet. Versuche es ohne direktes Sonnenlicht.');
+    if (f.includes('low_contrast')) qualityWarns.push('📷 Wenig Kontrast — vielleicht nochmal näher heran.');
+
+    // Build observation
+    const observations = [];
+    if (f.includes('red_indicator'))    observations.push('🔴 **Rote Indikatoren/LEDs** sichtbar — typisches Zeichen für einen **Fehlerzustand**.');
+    if (f.includes('green_indicator'))  observations.push('🟢 **Grüne Anzeigen** — System scheint in Betrieb zu sein.');
+    if (f.includes('yellow_indicator')) observations.push('🟡 **Gelbe/Orange Anzeigen** — meist Warnung oder Ladevorgang.');
+    if (f.includes('panel_like'))       observations.push('🔋 Ich erkenne eine **dunkle reflektive Oberfläche** — wirkt wie ein Solarpanel.');
+    if (f.includes('possibly_dirty'))   observations.push('🟤 Die Oberfläche wirkt **verschmutzt oder staubig** — das reduziert die Leistung.');
+    if (f.includes('device_housing'))   observations.push('📦 Sieht aus wie ein **Gerätegehäuse** (Inverter, Charge-Controller o.ä.).');
+    if (f.includes('cable_like'))       observations.push('🔌 Ich sehe **Strukturen die wie Verkabelung** aussehen.');
+    if (f.includes('outdoor_sky'))      observations.push('🌤 Aufnahme **im Freien** — guter Blick auf die Installation.');
+    if (f.includes('hazy'))             observations.push('💨 Diffuse helle Bereiche — könnte **Rauch, Nebel oder Reflexionen** sein.');
+    if (f.includes('high_contrast_spots')) observations.push('⚡ **Stark kontrastreiche Stellen** — möglicherweise Glasbruch, Lichtreflexe oder Beschädigung.');
+
+    // Diagnose ableiten
+    let diagnosis = '';
+    let escalate = null;
+    let emergency = false;
+    let sources = [];
+
+    // Notfall-Heuristik
+    if (f.includes('hazy') && (userText.toLowerCase().includes('rauch') || userText.toLowerCase().includes('brennt') || userText.toLowerCase().includes('smoke'))) {
+      diagnosis = '\n\n⚠ **NOTFALL!** Bei sichtbarem Rauch sofort handeln:\n1. Hauptschalter aus\n2. Raum verlassen\n3. Notruf 112';
+      emergency = true;
+      escalate = { severity: 'high', type: 'battery_issue', emergency: true };
+    }
+    else if (f.includes('red_indicator')) {
+      diagnosis = '\n\n💡 **Diagnose**: Rote LED bedeutet meist Fehlerzustand. Notiere den Fehlercode am Display, mache einen Reset (30 Sekunden aus, dann ein). Bleibt rot → Techniker rufen.';
+      sources.push({ type: 'wizard', id: 'power_outage', label: 'Strom-Wizard' });
+      escalate = { severity: 'medium', type: 'inverter_issue' };
+    }
+    else if (f.includes('high_contrast_spots') && f.includes('panel_like')) {
+      diagnosis = '\n\n💡 **Verdacht auf Glasbruch oder Beschädigung** am Panel. **Nicht berühren** — Panel führt weiter Strom! Panel mit Tuch abdecken und Techniker rufen.';
+      sources.push({ type: 'wizard', id: 'panel_damage', label: 'Panel-Wizard' });
+      escalate = { severity: 'high', type: 'panel_damage' };
+    }
+    else if (f.includes('possibly_dirty') && f.includes('panel_like')) {
+      diagnosis = '\n\n💡 **Empfehlung**: Reinige die Panels — Staub kostet bis zu 30% Leistung. Anleitung im Reinigungs-Artikel.';
+      sources.push({ type: 'article', id: 'art_clean', label: 'Reinigungs-Anleitung' });
+    }
+    else if (f.includes('cable_like')) {
+      diagnosis = '\n\n💡 Wenn Kabel beschädigt oder lose aussehen: **nicht selbst anfassen**. Provisorisch mit Isolierband sichern, Techniker rufen.';
+      sources.push({ type: 'wizard', id: 'power_outage', label: 'Diagnose-Wizard' });
+    }
+    else if (f.includes('green_indicator')) {
+      diagnosis = '\n\n💡 Grüne LEDs sind ein gutes Zeichen — System läuft normal. Wenn du trotzdem ein Problem hast, beschreibe mir bitte was nicht funktioniert.';
+    }
+    else {
+      diagnosis = '\n\n💡 Beschreibe mir noch in Worten, was genau das Problem ist — dann kann ich dir gezielter helfen.';
+    }
+
+    // Wenn User auch Text geschickt hat: kombiniere mit Standard-Matching
+    let textResponse = null;
+    if (userText && userText.trim().length > 2) {
+      const m = this.match(userText);
+      if (m) {
+        textResponse = m.entry;
+        if (!escalate) escalate = m.entry.escalate || null;
+        if (!sources.length) sources = m.entry.sources || [];
+      }
+    }
+
+    // Compose response
+    let parts = ['📷 **Bildanalyse:**'];
+    if (qualityWarns.length) parts.push(qualityWarns.join('\n'));
+    if (observations.length) parts.push(observations.join('\n'));
+    else if (!qualityWarns.length) parts.push('Ich erkenne ein Bild, kann aber keine eindeutigen Solar-Komponenten zuordnen.');
+    parts.push(diagnosis);
+    if (textResponse) parts.push('\n**Zu deiner Frage:**\n' + textResponse.answer);
+
+    return {
+      text: parts.filter(Boolean).join('\n'),
+      sources,
+      emergency,
+      escalate,
+      quickReplies: emergency
+        ? ['Notfall-Modus öffnen', 'Techniker anrufen']
+        : ['Anderes Foto', 'Techniker rufen', 'Mehr Details']
+    };
   }
 };

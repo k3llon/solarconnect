@@ -1144,7 +1144,9 @@ const app = {
 
   renderBubble(m) {
     if (m.role === 'user') {
-      return `<div class="bubble bubble-user">${this.escapeHtml(m.text)}</div>`;
+      const img = m.imageData ? `<img src="${m.imageData}" class="bubble-image" onclick="app.lightbox('${m.id}')" alt="">` : '';
+      const caption = m.text ? this.escapeHtml(m.text) : (m.imageData ? '📷 Foto gesendet' : '');
+      return `<div class="bubble bubble-user" data-id="${m.id}">${img}${caption ? `<div>${caption}</div>` : ''}</div>`;
     }
     // AI bubble — supports basic markdown bold (**text**) → strong
     const formatted = this.escapeHtml(m.text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
@@ -1152,7 +1154,24 @@ const app = {
       const cls = s.type === 'emergency' ? 'source-chip danger' : 'source-chip';
       return `<button class="${cls}" onclick="app.aiSourceClick('${s.type}','${s.id}')">${this.escapeHtml(s.label)}</button>`;
     }).join('');
-    return `<div class="bubble bubble-ai ${m.emergency ? 'emergency' : ''}">${formatted}${sources ? `<div class="bubble-sources">${sources}</div>` : ''}</div>`;
+    const tags = m.visionTags && m.visionTags.length
+      ? `<div class="vision-tags">${m.visionTags.map(t => `<span class="vision-tag">${this.escapeHtml(t)}</span>`).join('')}</div>`
+      : '';
+    return `<div class="bubble bubble-ai ${m.emergency ? 'emergency' : ''}">${formatted}${tags}${sources ? `<div class="bubble-sources">${sources}</div>` : ''}</div>`;
+  },
+
+  lightbox(messageId) {
+    db.getChats().then(all => {
+      const msg = all.find(m => m.id === messageId);
+      if (!msg || !msg.imageData) return;
+      const ex = document.querySelector('.lightbox');
+      if (ex) ex.remove();
+      const lb = document.createElement('div');
+      lb.className = 'lightbox';
+      lb.innerHTML = `<img src="${msg.imageData}" alt="">`;
+      lb.onclick = () => lb.remove();
+      document.body.appendChild(lb);
+    });
   },
 
   renderSuggestions(list) {
@@ -1165,75 +1184,178 @@ const app = {
     if (e.key === 'Enter') { e.preventDefault(); this.chatSend(); }
   },
 
+  _pendingImage: null,
+
+  onChatFile(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { this.showToast('Bitte ein Bild auswählen'); return; }
+    if (file.size > 5 * 1024 * 1024) { this.showToast('Bild zu groß (max 5 MB)'); return; }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      // Compress / resize via canvas to keep DB small
+      this.compressImage(ev.target.result, 1024).then(dataUrl => {
+        this._pendingImage = dataUrl;
+        const preview = document.getElementById('chat-preview');
+        const img = document.getElementById('chat-preview-img');
+        img.src = dataUrl;
+        preview.classList.remove('hidden');
+        document.getElementById('chat-input').placeholder = 'Beschreibung (optional)...';
+        document.getElementById('chat-input').focus();
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  },
+
+  compressImage(dataUrl, maxDim) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else       { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = dataUrl;
+    });
+  },
+
+  removePreview() {
+    this._pendingImage = null;
+    document.getElementById('chat-preview').classList.add('hidden');
+    document.getElementById('chat-preview-img').src = '';
+    document.getElementById('chat-input').placeholder = 'Frag Surya AI...';
+  },
+
   chatSend() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
-    if (!text) return;
+    const image = this._pendingImage;
+    if (!text && !image) return;
     input.value = '';
-    this.chatSendText(text);
+    if (image) {
+      this.chatSendImage(image, text);
+      this.removePreview();
+    } else {
+      this.chatSendText(text);
+    }
   },
 
   async chatSendText(text) {
-    // remove empty state if visible
     const container = document.getElementById('chat-messages');
     const empty = container.querySelector('.chat-empty');
     if (empty) container.innerHTML = '';
 
-    // user message
+    const userMsg = { id: 'm_' + Date.now(), role: 'user', text, timestamp: Date.now() };
+    await db.addChat(userMsg);
+    container.insertAdjacentHTML('beforeend', this.renderBubble(userMsg));
+    this.scrollChatToBottom();
+    if (navigator.vibrate) navigator.vibrate(15);
+
+    this.showTyping();
+    const thinking = 600 + Math.random() * 700;
+    setTimeout(async () => {
+      const resp = AI.respond(text);
+      await this.deliverAiResponse(resp, text);
+    }, thinking);
+  },
+
+  async chatSendImage(imageData, text = '') {
+    const container = document.getElementById('chat-messages');
+    const empty = container.querySelector('.chat-empty');
+    if (empty) container.innerHTML = '';
+
     const userMsg = {
-      id: 'm_' + Date.now(),
-      role: 'user',
-      text,
-      timestamp: Date.now()
+      id: 'm_' + Date.now(), role: 'user',
+      text, imageData, timestamp: Date.now()
     };
     await db.addChat(userMsg);
     container.insertAdjacentHTML('beforeend', this.renderBubble(userMsg));
     this.scrollChatToBottom();
     if (navigator.vibrate) navigator.vibrate(15);
 
-    // typing indicator
+    this.showTyping('Analysiere Bild');
+
+    try {
+      const analysis = await AI.analyzeImage(imageData);
+      // Longer thinking time for image — feels like "real" vision work
+      const thinking = 1200 + Math.random() * 800;
+      setTimeout(async () => {
+        const resp = AI.describeImage(analysis, text);
+        // Add vision tags for transparency
+        const tagMap = {
+          red_indicator: 'Rote LED', green_indicator: 'Grüne LED', yellow_indicator: 'Warnung gelb',
+          panel_like: 'Solarpanel', possibly_dirty: 'Verschmutzung', device_housing: 'Gerätegehäuse',
+          cable_like: 'Verkabelung', outdoor_sky: 'Außenaufnahme', hazy: 'Diffus/Rauch?',
+          high_contrast_spots: 'Kontrast-Spots', too_dark: 'Zu dunkel', overexposed: 'Überbelichtet',
+          low_contrast: 'Niedriger Kontrast'
+        };
+        const visionTags = analysis.features
+          .map(f => tagMap[f]).filter(Boolean);
+        await this.deliverAiResponse(resp, text || '[Foto]', visionTags);
+      }, thinking);
+    } catch (err) {
+      console.error('Vision error:', err);
+      document.getElementById('typing-indicator')?.remove();
+      await this.deliverAiResponse({
+        text: '😕 Bei der Bildanalyse ist ein Fehler aufgetreten. Bitte versuche es nochmal.',
+        sources: [], emergency: false, escalate: null,
+        quickReplies: ['Anderes Foto', 'In Worten beschreiben']
+      }, text);
+    }
+  },
+
+  showTyping(label) {
     document.getElementById('chat-suggestions').innerHTML = '';
+    const container = document.getElementById('chat-messages');
+    const old = document.getElementById('typing-indicator');
+    if (old) old.remove();
     const typingEl = document.createElement('div');
     typingEl.className = 'typing';
     typingEl.id = 'typing-indicator';
-    typingEl.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>';
+    typingEl.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>'
+      + (label ? `<span style="margin-left:8px;font-size:12px;color:var(--text-light)">${this.escapeHtml(label)}…</span>` : '');
     container.appendChild(typingEl);
     this.scrollChatToBottom();
+  },
 
-    // simulate thinking
-    const thinking = 600 + Math.random() * 700;
-    setTimeout(async () => {
-      const resp = AI.respond(text);
+  async deliverAiResponse(resp, userTextForLog, visionTags = []) {
+    const container = document.getElementById('chat-messages');
+    const aiMsg = {
+      id: 'm_' + Date.now() + '_a',
+      role: 'ai',
+      text: resp.text,
+      sources: resp.sources || [],
+      emergency: resp.emergency || false,
+      visionTags,
+      timestamp: Date.now()
+    };
 
-      const aiMsg = {
-        id: 'm_' + Date.now() + '_a',
-        role: 'ai',
-        text: resp.text,
-        sources: resp.sources || [],
-        emergency: resp.emergency || false,
-        timestamp: Date.now()
-      };
-
-      // Auto-create report on escalation
-      if (resp.escalate) {
-        const reportId = await this.autoCreateReport(
-          resp.escalate.type,
-          resp.escalate.severity,
-          `Aus KI-Chat: "${text.slice(0,80)}"`
-        );
-        aiMsg.sources = [...(aiMsg.sources || []), { type: 'ticket', id: reportId, label: '🎫 Ticket öffnen' }];
-        if (resp.escalate.emergency) {
-          aiMsg.sources.push({ type: 'emergency', id: 'now', label: '⚠ Notfall-Modus' });
-        }
+    if (resp.escalate) {
+      const reportId = await this.autoCreateReport(
+        resp.escalate.type,
+        resp.escalate.severity,
+        `Aus KI-Chat: "${(userTextForLog || '').slice(0,80)}"`
+      );
+      aiMsg.sources = [...(aiMsg.sources || []), { type: 'ticket', id: reportId, label: '🎫 Ticket öffnen' }];
+      if (resp.escalate.emergency) {
+        aiMsg.sources.push({ type: 'emergency', id: 'now', label: '⚠ Notfall-Modus' });
       }
+    }
 
-      await db.addChat(aiMsg);
-      document.getElementById('typing-indicator')?.remove();
-      container.insertAdjacentHTML('beforeend', this.renderBubble(aiMsg));
-      this.scrollChatToBottom();
-      this.renderSuggestions(resp.quickReplies || []);
-      if (navigator.vibrate) navigator.vibrate(20);
-    }, thinking);
+    await db.addChat(aiMsg);
+    document.getElementById('typing-indicator')?.remove();
+    container.insertAdjacentHTML('beforeend', this.renderBubble(aiMsg));
+    this.scrollChatToBottom();
+    this.renderSuggestions(resp.quickReplies || []);
+    if (navigator.vibrate) navigator.vibrate(20);
   },
 
   aiSourceClick(type, id) {
