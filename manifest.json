@@ -1,0 +1,15 @@
+{
+  "name": "SolarConnect — India",
+  "short_name": "SolarConnect",
+  "description": "Solaranlagen-Management für ländliche Gemeinden in Indien",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f8f6",
+  "theme_color": "#1a6b3c",
+  "orientation": "portrait",
+  "lang": "de",
+  "categories": ["utilities", "education", "lifestyle"],
+  "icons": [
+    { "src": "icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
