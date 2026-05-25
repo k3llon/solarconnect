@@ -3,8 +3,27 @@
 // Designed for India: handles English/German/Hindi keywords for common solar issues.
 
 const AI = {
-  name: 'Surya AI',           // "Surya" = Sanskrit "Sonne"
-  greeting: 'Namaste! 🙏 Ich bin Surya, deine KI-Assistentin für Solar-Probleme. Beschreibe dein Problem in einfachen Worten — ich helfe dir gerne weiter.',
+  name: 'Surya AI',
+  greeting: {
+    de: 'Namaste! 🙏 Ich bin Surya, deine KI-Assistentin für Solar-Probleme. Beschreibe dein Problem in einfachen Worten.',
+    en: 'Namaste! 🙏 I am Surya, your AI assistant for solar issues. Describe your problem in simple words.',
+    hi: 'नमस्ते! 🙏 मैं सूर्या हूँ, सौर समस्याओं के लिए आपकी AI सहायक। अपनी समस्या सरल शब्दों में बताएँ।',
+    ta: 'வணக்கம்! 🙏 நான் சூர்யா, சூரிய பிரச்சினைகளுக்கான AI உதவியாளர். உங்கள் பிரச்சினையை விவரிக்கவும்.',
+    bn: 'নমস্কার! 🙏 আমি সূর্য, সৌর সমস্যার জন্য আপনার AI সহায়ক। আপনার সমস্যা সহজ ভাষায় বলুন।',
+    te: 'నమస్తే! 🙏 నేను సూర్య, సౌర సమస్యల కోసం మీ AI సహాయకుడిని. మీ సమస్యను సరళమైన మాటల్లో వివరించండి.'
+  },
+
+  // Translations for the AI's own answer phrases — used to localize generic responses
+  i18n: {
+    fallback: {
+      de: 'Hmm, ich bin nicht ganz sicher. Versuch es mit konkreteren Worten — z.B. "Inverter zeigt rote LED", "Batterie schnell leer", "Panel verschmutzt".',
+      en: 'Hmm, I am not sure. Try concrete words — e.g. "inverter shows red LED", "battery drains fast", "panel is dirty".',
+      hi: 'मुझे यकीन नहीं है। कुछ ठोस शब्द आज़माएँ — जैसे "इन्वर्टर लाल LED", "बैटरी जल्दी खाली", "पैनल गंदा"।',
+      ta: 'எனக்கு உறுதியில்லை. குறிப்பிட்ட சொற்களை முயற்சி செய் — "சிவப்பு LED", "பேட்டரி வேகமாக", "பேனல் அழுக்கு".',
+      bn: 'নিশ্চিত নই। স্পষ্ট শব্দ ব্যবহার করুন — "ইনভার্টার লাল LED", "ব্যাটারি দ্রুত", "প্যানেল নোংরা"।',
+      te: 'నాకు ఖచ్చితంగా తెలియదు. స్పష్టమైన పదాలు ప్రయత్నించండి — "ఎరుపు LED", "బ్యాటరీ వేగంగా", "ప్యానెల్ మురికి".'
+    }
+  },
 
   // Synonyms: maps surface words to canonical concepts
   synonyms: {
@@ -57,8 +76,15 @@ const AI = {
 
     // ========== POWER ISSUES ==========
     { req: ['power', 'out'], weight: 60,
-      answer: 'Kein Strom — lass uns das systematisch lösen:\n\n**Schritt 1: Inverter-LED prüfen**\nWelche Farbe siehst du?\n• **Grün** → Inverter OK, prüfe die Sicherung (MCB)\n• **Rot** → Fehlercode am Display ablesen\n• **Aus** → DC-Schalter und Batterie prüfen\n\nDer Wizard führt dich Schritt für Schritt durch.',
-      sources: [{ type: 'wizard', id: 'power_outage', label: 'Strom-Wizard starten' }]
+      answer: {
+        de: 'Kein Strom — lass uns das systematisch lösen:\n\n**Schritt 1: Inverter-LED prüfen**\n• **Grün** → MCB checken\n• **Rot** → Fehlercode notieren\n• **Aus** → DC-Schalter prüfen\n\nDer Wizard führt dich Schritt für Schritt.',
+        en: 'No power — let us solve this step by step:\n\n**Step 1: Check inverter LED**\n• **Green** → Check MCB\n• **Red** → Note error code\n• **Off** → Check DC switch\n\nThe wizard guides you.',
+        hi: 'बिजली नहीं — कदम-दर-कदम:\n\n**1: इन्वर्टर LED जाँचें**\n• **हरी** → MCB जाँचें\n• **लाल** → कोड नोट करें\n• **बंद** → DC स्विच\n\nविज़ार्ड मार्गदर्शन करेगा।',
+        ta: 'மின்சாரம் இல்லை — படிப்படியாக:\n\n**1: இன்வெர்ட்டர் LED**\n• **பச்சை** → MCB\n• **சிவப்பு** → குறியீடு\n• **ஆஃப்** → DC சுவிட்ச்\n\nவிஸார்ட் வழிகாட்டும்.',
+        bn: 'বিদ্যুৎ নেই — ধাপে ধাপে:\n\n**1: ইনভার্টার LED**\n• **সবুজ** → MCB\n• **লাল** → কোড\n• **বন্ধ** → DC সুইচ\n\nউইজার্ড সাহায্য করবে।',
+        te: 'విద్యుత్ లేదు — దశలవారీగా:\n\n**1: ఇన్వర్టర్ LED**\n• **ఆకుపచ్చ** → MCB\n• **ఎరుపు** → కోడ్\n• **ఆఫ్** → DC స్విచ్\n\nవిజార్డ్ మార్గనిర్దేశం.'
+      },
+      sources: [{ type: 'wizard', id: 'power_outage', label: { de: 'Strom-Wizard starten', en: 'Start power wizard', hi: 'विज़ार्ड शुरू', ta: 'விஸார்ட் தொடங்கு', bn: 'উইজার্ড শুরু', te: 'విజార్డ్ ప్రారంభం' } }]
     },
     { req: ['inverter', 'red'], weight: 75,
       answer: 'Rote LED am Inverter = **Fehlerzustand**.\n\n1. Schau auf das Display — gibt es einen Fehlercode (z.B. F01, E07)?\n2. **Notiere den Code** — der Techniker braucht ihn\n3. **Reset versuchen**: Inverter ausschalten, 30 Sekunden warten, wieder einschalten\n4. Bleibt rot → Techniker rufen\n\nHäufige Codes: F01 (Überlast), F03 (Batterie tief), F06 (Überhitzung).',
@@ -74,8 +100,18 @@ const AI = {
 
     // ========== BATTERY ==========
     { req: ['battery', 'not_charging'], weight: 75,
-      answer: 'Batterie lädt nicht voll? Häufige Ursachen:\n\n1. **Verschmutzte Panels** (häufigste!) → 30% Leistungsverlust durch Staub. Wann hast du zuletzt gereinigt?\n2. **Verschattung** durch neue Bäume/Antennen\n3. **Defekter Charge-Controller** (MPPT)\n4. **Sulfatierung** bei alten Bleibatterien\n\nStart mit Reinigung — kostet nichts und hilft oft.',
-      sources: [{ type: 'wizard', id: 'battery_issue', label: 'Batterie-Wizard' }, { type: 'article', id: 'art_clean', label: 'Reinigungs-Anleitung' }]
+      answer: {
+        de: 'Batterie lädt nicht voll? Häufige Ursachen:\n\n1. **Verschmutzte Panels** (häufigste!) — 30% Verlust durch Staub\n2. **Verschattung** durch Bäume/Antennen\n3. **Defekter Charge-Controller** (MPPT)\n4. **Sulfatierung** bei alten Bleibatterien\n\nStart mit Reinigung — kostet nichts, hilft oft.',
+        en: 'Battery not charging fully? Common reasons:\n\n1. **Dirty panels** — 30% loss from dust\n2. **Shading** by trees/antennas\n3. **Faulty MPPT controller**\n4. **Sulfation** in old lead batteries\n\nStart with cleaning.',
+        hi: 'बैटरी पूरी चार्ज नहीं? कारण:\n\n1. **गंदे पैनल** (30% नुकसान)\n2. **छाया** (पेड़, एंटीना)\n3. **खराब MPPT**\n4. **सल्फेशन** पुरानी बैटरी\n\nसफाई से शुरुआत।',
+        ta: 'பேட்டரி முழுமையாக சார்ஜாகவில்லை?\n\n1. **அழுக்கு பேனல்** (30% இழப்பு)\n2. **நிழல்** (மரம், ஆண்டெனா)\n3. **MPPT கோளாறு**\n4. **பழைய பேட்டரி**\n\nசுத்தம் தொடங்கு.',
+        bn: 'ব্যাটারি পুরো চার্জ হয় না?\n\n1. **নোংরা প্যানেল** (30% ক্ষতি)\n2. **ছায়া** (গাছ, অ্যান্টেনা)\n3. **MPPT ত্রুটি**\n4. **পুরানো ব্যাটারি**\n\nপরিষ্কার দিয়ে শুরু।',
+        te: 'బ్యాటరీ పూర్తి ఛార్జ్ కాదా?\n\n1. **మురికి ప్యానెల్‌లు** (30% నష్టం)\n2. **నీడ** (చెట్లు, యాంటెన్నాలు)\n3. **MPPT లోపం**\n4. **పాత బ్యాటరీ**\n\nశుభ్రంతో ప్రారంభం.'
+      },
+      sources: [
+        { type: 'wizard', id: 'battery_issue', label: { de: 'Batterie-Wizard', en: 'Battery wizard', hi: 'बैटरी विज़ार्ड', ta: 'பேட்டரி விஸார்ட்', bn: 'ব্যাটারি উইজার্ড', te: 'బ్యాటరీ విజార్డ్' } },
+        { type: 'article', id: 'art_clean', label: { de: 'Reinigungs-Anleitung', en: 'Cleaning guide', hi: 'सफाई गाइड', ta: 'சுத்தம் வழிகாட்டி', bn: 'পরিষ্কার গাইড', te: 'శుభ్రపరిచే గైడ్' } }
+      ]
     },
     { req: ['battery', 'drain'], weight: 70,
       answer: 'Batterie entlädt zu schnell? Prüfe:\n\n**Neue Verbraucher?**\n• Kühlschrank, Pumpe, Klimaanlage ziehen sehr viel\n• Berechne den Gesamt-Wattbedarf\n\n**Alter der Batterie?**\n• Blei-Säure: 5-7 Jahre\n• Lithium: 8-10 Jahre\n• Danach sinkt die Kapazität deutlich\n\n**Standby-Verbrauch?**\n• Geräte im Standby ziehen auch nachts Strom\n• Steckdosen-Leisten mit Schalter helfen.',
@@ -87,8 +123,15 @@ const AI = {
 
     // ========== PANELS ==========
     { req: ['panel', 'dirty'], weight: 70,
-      answer: '**Staub kostet bis zu 30% Leistung!** Reinigung-Anleitung:\n\n**Wann:** Morgens, wenn Panels kühl sind. Nicht in praller Sonne.\n\n**Wie:**\n1. DC-Schalter ausschalten\n2. Weiches Tuch oder Mikrofaser-Wischer\n3. Sauberes Wasser (kein Salzwasser!)\n4. Keine harten Bürsten, kein Hochdruck\n5. Vogelkot: einweichen, dann sanft wischen\n\n**Sicherheit:** Rutschfeste Schuhe, niemals allein aufs Dach.',
-      sources: [{ type: 'article', id: 'art_clean', label: 'Voller Artikel' }]
+      answer: {
+        de: '**Staub kostet bis zu 30%!** Reinigung:\n\n**Wann:** Morgens, Panels kühl. Nicht in praller Sonne.\n\n**Wie:**\n1. DC-Schalter aus\n2. Weiches Tuch\n3. Sauberes Wasser\n4. Keine Bürsten / Hochdruck\n5. Vogelkot einweichen\n\n**Sicherheit:** Rutschfeste Schuhe.',
+        en: '**Dust costs up to 30%!** Cleaning:\n\n**When:** Morning, panels cool. Not in hot sun.\n\n**How:**\n1. DC switch off\n2. Soft cloth\n3. Clean water\n4. No brushes / pressure\n5. Soak bird droppings\n\n**Safety:** Non-slip shoes.',
+        hi: '**धूल 30% कम करती है!** सफाई:\n\n**कब:** सुबह, ठंडे पैनल।\n\n**कैसे:**\n1. DC बंद\n2. नरम कपड़ा\n3. साफ पानी\n4. ब्रश नहीं\n5. पक्षी विष्ठा भिगोएँ\n\n**सुरक्षा:** फिसलन रहित जूते।',
+        ta: '**தூசி 30% இழப்பு!** சுத்தம்:\n\n**எப்போது:** காலை, பேனல்கள் குளிர்.\n\n**எப்படி:**\n1. DC ஆஃப்\n2. மென் துணி\n3. சுத்த நீர்\n4. தூரிகை வேண்டாம்\n5. பறவை எச்சம் ஊறவை\n\n**பாதுகாப்பு:** வழுக்காத காலணி.',
+        bn: '**ধুলো 30% ক্ষতি!** পরিষ্কার:\n\n**কখন:** সকালে, ঠান্ডা প্যানেল।\n\n**কীভাবে:**\n1. DC বন্ধ\n2. নরম কাপড়\n3. পরিষ্কার জল\n4. ব্রাশ নয়\n5. পাখির বিষ্ঠা ভেজান\n\n**নিরাপত্তা:** স্লিপ-প্রতিরোধী জুতা।',
+        te: '**ధూళి 30% నష్టం!** శుభ్రం:\n\n**ఎప్పుడు:** ఉదయం, చల్లని ప్యానెల్‌లు.\n\n**ఎలా:**\n1. DC ఆఫ్\n2. మృదు వస్త్రం\n3. శుభ్రమైన నీరు\n4. బ్రష్ వద్దు\n5. పక్షి రెట్టలు\n\n**భద్రత:** స్లిప్-రెసిస్టెంట్ షూస్.'
+      },
+      sources: [{ type: 'article', id: 'art_clean', label: { de: 'Voller Artikel', en: 'Full article', hi: 'पूरा लेख', ta: 'முழு கட்டுரை', bn: 'পূর্ণ নিবন্ধ', te: 'పూర్తి వ్యాసం' } }]
     },
     { req: ['panel'], weight: 30,
       answer: 'Was ist mit dem Panel?\n\n• **Verschmutzt** → Reinigung (großer Effekt!)\n• **Verfärbt / Flecken** → Hot-Spot, Techniker schauen lassen\n• **Glas gebrochen** → ⚠ Stromschlag-Gefahr — nicht berühren!\n• **Loses Kabel** → Mit Isolierband sichern, Techniker rufen\n\nWas siehst du genau?',
@@ -143,15 +186,22 @@ const AI = {
     }
   ],
 
-  // Quick-start suggestions shown at top of empty chat
-  suggestions: [
-    'Mein Inverter zeigt rote LED',
-    'Batterie lädt nicht voll',
-    'Panels reinigen — wie geht das?',
-    'Wie viel kostet eine 3kW Anlage?',
-    'Welche Förderungen gibt es?',
-    'Anlage vorbereiten für Monsun'
-  ],
+  // Quick-start suggestions per language
+  suggestionsI18n: {
+    de: ['Mein Inverter zeigt rote LED', 'Batterie lädt nicht voll', 'Panels reinigen — wie geht das?', 'Wie viel kostet eine 3kW Anlage?', 'Welche Förderungen gibt es?', 'Anlage vorbereiten für Monsun'],
+    en: ['My inverter shows red LED', 'Battery not charging fully', 'How to clean panels?', 'How much does a 3kW system cost?', 'What subsidies are available?', 'Prepare system for monsoon'],
+    hi: ['मेरा इन्वर्टर लाल LED दिखा रहा है', 'बैटरी पूरी चार्ज नहीं हो रही', 'पैनल कैसे साफ करें?', '3kW सिस्टम की कीमत?', 'कौन सी सब्सिडी है?', 'मानसून की तैयारी'],
+    ta: ['இன்வெர்ட்டர் சிவப்பு LED', 'பேட்டரி முழுமையாக ஏற்றவில்லை', 'பேனல்களை எப்படி சுத்தம்?', '3kW விலை?', 'மானியங்கள் என்ன?', 'பருவமழைக்கு தயாரிப்பு'],
+    bn: ['ইনভার্টার লাল LED', 'ব্যাটারি পুরো চার্জ হয় না', 'প্যানেল কীভাবে পরিষ্কার?', '3kW মূল্য?', 'কোন ভর্তুকি?', 'বর্ষার প্রস্তুতি'],
+    te: ['ఇన్వర్టర్ ఎరుపు LED', 'బ్యాటరీ పూర్తి ఛార్జ్ కావడం లేదు', 'ప్యానెల్‌లను ఎలా శుభ్రం?', '3kW ధర?', 'ఏ సబ్సిడీలు?', 'వర్ష ఋతువు సన్నాహాలు']
+  },
+
+  suggestionsFor(lang) {
+    return this.suggestionsI18n[lang] || this.suggestionsI18n.de;
+  },
+
+  // Backwards-compat alias
+  get suggestions() { return this.suggestionsI18n.de; },
 
   // ===== ENGINE =====
   normalize(text) {
@@ -193,40 +243,44 @@ const AI = {
     return best ? { entry: best, concepts: [...concepts], score: bestScore } : null;
   },
 
+  // Helper: pick localized string from {de,en,...} or plain string
+  _L(obj, lang) {
+    if (obj == null) return '';
+    if (typeof obj === 'string') return obj;
+    return obj[lang] || obj.de || obj.en || Object.values(obj)[0] || '';
+  },
+
   // Main: generate response (returns { text, sources, escalate, emergency, quickReplies })
-  respond(userText) {
+  respond(userText, lang) {
+    const L = (typeof app !== 'undefined' && app.lang) ? app.lang : (lang || 'de');
     const match = this.match(userText);
     if (match) {
       return {
-        text: match.entry.answer,
-        sources: match.entry.sources || [],
+        text: this._L(match.entry.answer, L),
+        sources: (match.entry.sources || []).map(s => ({ ...s, label: this._L(s.label, L) })),
         escalate: match.entry.escalate || null,
         emergency: match.entry.emergency || false,
-        quickReplies: this.followUp(match.entry, match.concepts)
+        quickReplies: this.followUp(match.entry, match.concepts, L)
       };
     }
-    // Fallback — friendly + redirect
+    // Fallback
     return {
-      text: 'Hmm, ich bin nicht sicher, was du genau meinst. Versuch es nochmal mit ein paar konkreten Worten — zum Beispiel:\n\n• "Inverter zeigt rote LED"\n• "Batterie wird schnell leer"\n• "Panel ist verschmutzt"\n\nOder beschreibe das Symptom (was passiert? wann?). Du kannst auch direkt einen Techniker im Support-Bereich kontaktieren.',
+      text: this._L(this.i18n.fallback, L),
       sources: [
-        { type: 'view',   id: 'selfhelp',   label: 'Selbsthilfe' },
-        { type: 'view',   id: 'technicians',label: 'Techniker rufen' }
+        { type: 'view', id: 'selfhelp',    label: { de: 'Selbsthilfe',   en: 'Self-Help',     hi: 'स्व-सहायता',  ta: 'சுய உதவி', bn: 'স্ব-সহায়তা', te: 'స్వీయ సహాయం' }[L] || 'Selbsthilfe' },
+        { type: 'view', id: 'technicians', label: { de: 'Techniker rufen', en: 'Call technician', hi: 'तकनीशियन',  ta: 'நிபுணர்',   bn: 'টেকনিশিয়ান', te: 'టెక్నీషియన్' }[L] || 'Techniker rufen' }
       ],
       escalate: null,
       emergency: false,
-      quickReplies: this.suggestions.slice(0, 3)
+      quickReplies: this.suggestionsFor(L).slice(0, 3)
     };
   },
 
-  // Suggest follow-up questions based on matched concepts
-  followUp(entry, concepts) {
-    if (entry.emergency) return ['Techniker anrufen', 'Notfall-Modus öffnen'];
-    if (concepts.includes('battery')) return ['Wie reinige ich Panels?', 'Wie alt sollte eine Batterie sein?'];
-    if (concepts.includes('panel'))   return ['Welche Förderung gibt es?', 'Wie oft reinigen?'];
-    if (concepts.includes('inverter'))return ['Was bedeutet F03?', 'Batterie prüfen'];
-    if (concepts.includes('install')) return ['Welche Kosten?', 'Welche Förderung?'];
-    if (concepts.includes('cost'))    return ['Welche Förderung?', 'Was kostet eine Batterie?'];
-    return ['Ist das sicher?', 'Soll ich Techniker rufen?'];
+  // Suggest follow-ups; uses generic suggestion list per language
+  followUp(entry, concepts, lang) {
+    const suggs = this.suggestionsFor(lang);
+    if (entry.emergency) return [suggs[0], { de: 'Notfall-Modus öffnen', en: 'Open emergency mode', hi: 'आपातकालीन मोड', ta: 'அவசர பயன்முறை', bn: 'জরুরি মোড', te: 'అత్యవసర మోడ్' }[lang] || 'Notfall-Modus öffnen'];
+    return suggs.slice(0, 3);
   },
 
   // ============================================================
@@ -340,17 +394,25 @@ const AI = {
     return features;
   },
 
-  // Erzeugt eine deutsche Beschreibung der Bildanalyse + Diagnose
+  // Erzeugt eine Beschreibung der Bildanalyse + Diagnose (locale-aware)
   describeImage(analysis, userText = '') {
+    const lang = (typeof app !== 'undefined' && app.lang) ? app.lang : 'de';
     const f = analysis.features;
     const stats = analysis.stats;
 
-    // Bild unbrauchbar
     if (f.includes('unreadable')) {
+      const unread = {
+        de: '📷 Ich konnte das Bild leider nicht lesen.',
+        en: '📷 I could not read the image.',
+        hi: '📷 छवि नहीं पढ़ सकी।',
+        ta: '📷 படத்தைப் படிக்க முடியவில்லை.',
+        bn: '📷 ছবি পড়তে পারিনি।',
+        te: '📷 చిత్రాన్ని చదవలేకపోయాను.'
+      };
       return {
-        text: '📷 Ich konnte das Bild leider nicht lesen. Bitte versuche es nochmal mit einem anderen Bild.',
+        text: unread[lang] || unread.de,
         sources: [], emergency: false, escalate: null,
-        quickReplies: ['Anderes Bild senden', 'Problem in Worten beschreiben']
+        quickReplies: this.suggestionsFor(lang).slice(0, 2)
       };
     }
 

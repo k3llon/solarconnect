@@ -47,47 +47,47 @@
         <button class="lang-btn active" data-lang="de" onclick="app.onbLang(this)"><strong>Deutsch</strong><span>German (Demo)</span></button>
         <button class="lang-btn" data-lang="te" onclick="app.onbLang(this)"><strong>తెలుగు</strong><span>Telugu</span></button>
       </div>
-      <button class="primary-btn" onclick="app.onbNext()">Weiter</button>
+      <button class="primary-btn" data-i18n="onb.next" onclick="app.onbNext()">Weiter</button>
     </div>
 
     <div class="onb-page hidden" data-page="3">
-      <h2>Wo ist deine Gemeinde?</h2>
-      <label class="setting-label">Dorf / Stadt</label>
+      <h2 data-i18n="onb.where">Wo ist deine Gemeinde?</h2>
+      <label class="setting-label" data-i18n="onb.village">Dorf / Stadt</label>
       <input type="text" id="onb-village" placeholder="z.B. Khandala" class="setting-input" value="Khandala">
-      <label class="setting-label">Bundesstaat</label>
+      <label class="setting-label" data-i18n="onb.state">Bundesstaat</label>
       <select id="onb-state" class="setting-input">
         <option>Maharashtra</option><option>Tamil Nadu</option><option>Karnataka</option>
         <option>Gujarat</option><option>Rajasthan</option><option>West Bengal</option>
         <option>Telangana</option><option>Uttar Pradesh</option><option>Bihar</option>
         <option>Odisha</option><option>Kerala</option><option>Madhya Pradesh</option>
       </select>
-      <label class="setting-label">Deine Rolle</label>
+      <label class="setting-label" data-i18n="onb.yourRole">Deine Rolle</label>
       <div class="role-options">
         <button class="role-btn active" data-role="user" onclick="app.selectRole(this)">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span>Nutzer:in</span>
+          <span data-i18n="role.user">Nutzer:in</span>
         </button>
         <button class="role-btn" data-role="technician" onclick="app.selectRole(this)">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-          <span>Techniker</span>
+          <span data-i18n="role.technician">Techniker</span>
         </button>
         <button class="role-btn" data-role="admin" onclick="app.selectRole(this)">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3-3-3 3"/><path d="M19 8v8"/></svg>
-          <span>Dorf-Admin</span>
+          <span data-i18n="role.admin">Dorf-Admin</span>
         </button>
       </div>
-      <button class="primary-btn" onclick="app.onbFinish()">Loslegen</button>
+      <button class="primary-btn" data-i18n="onb.start" onclick="app.onbFinish()">Loslegen</button>
     </div>
   </div>
 
   <!-- ============= TOP BANNERS ============= -->
   <div id="offline-banner" class="offline-banner hidden">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-    <span>Offline — Daten werden lokal gespeichert</span>
+    <span data-i18n="banner.offline">Offline — Daten werden lokal gespeichert</span>
   </div>
   <div id="sync-banner" class="sync-banner hidden">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-    <span>Synchronisiert!</span>
+    <span data-i18n="banner.synced">Synchronisiert!</span>
   </div>
 
   <!-- ============= APP ============= -->
@@ -123,11 +123,11 @@
       <div class="hero-card">
         <div class="hero-ring" id="hero-ring"></div>
         <div class="hero-meta">
-          <div class="hero-label">System-Zustand</div>
-          <div class="hero-value" id="hero-status">Alles in Ordnung</div>
-          <div class="hero-sub" id="hero-sub">Letzte Prüfung: jetzt</div>
+          <div class="hero-label" data-i18n="home.health">System-Zustand</div>
+          <div class="hero-value" id="hero-status" data-i18n="home.allGood">Alles in Ordnung</div>
+          <div class="hero-sub" id="hero-sub"></div>
           <div class="hero-tags">
-            <span class="tag tag-success" id="tag-power">Strom: OK</span>
+            <span class="tag tag-success" id="tag-power" data-i18n="home.powerOk">Strom: OK</span>
             <span class="tag tag-success" id="tag-batt">Batterie: 85%</span>
           </div>
         </div>
@@ -139,7 +139,7 @@
           <div id="weather-icon"></div>
           <div>
             <div class="weather-temp"><span id="weather-temp">32</span>°C</div>
-            <div class="weather-desc">Solarpotenzial: <strong id="weather-pot">Hoch</strong></div>
+            <div class="weather-desc"><span data-i18n="home.solarPot">Solarpotenzial:</span> <strong id="weather-pot">Hoch</strong></div>
           </div>
         </div>
         <div class="weather-forecast" id="weather-forecast"></div>
@@ -148,18 +148,18 @@
       <!-- Energy production chart -->
       <div class="card">
         <div class="card-head">
-          <h3>Energie — letzte 14 Tage</h3>
-          <button class="link-btn" onclick="app.showView('analytics')">Mehr →</button>
+          <h3 data-i18n="home.energy14d">Energie — letzte 14 Tage</h3>
+          <button class="link-btn" data-i18n="home.more" onclick="app.showView('analytics')">Mehr →</button>
         </div>
         <div class="legend">
-          <span class="legend-item"><i class="dot dot-green"></i>Produziert</span>
-          <span class="legend-item"><i class="dot dot-orange"></i>Verbraucht</span>
+          <span class="legend-item"><i class="dot dot-green"></i><span data-i18n="home.produced">Produziert</span></span>
+          <span class="legend-item"><i class="dot dot-orange"></i><span data-i18n="home.consumed">Verbraucht</span></span>
         </div>
         <div id="energy-chart"></div>
         <div class="stat-row">
-          <div class="stat"><div class="stat-val" id="stat-today">0</div><div class="stat-lbl">kWh heute</div></div>
-          <div class="stat"><div class="stat-val" id="stat-week">0</div><div class="stat-lbl">kWh / Woche</div></div>
-          <div class="stat"><div class="stat-val" id="stat-saved">₹0</div><div class="stat-lbl">Diese Woche</div></div>
+          <div class="stat"><div class="stat-val" id="stat-today">0</div><div class="stat-lbl" data-i18n="home.kwhToday">kWh heute</div></div>
+          <div class="stat"><div class="stat-val" id="stat-week">0</div><div class="stat-lbl" data-i18n="home.kwhWeek">kWh / Woche</div></div>
+          <div class="stat"><div class="stat-val" id="stat-saved">₹0</div><div class="stat-lbl" data-i18n="home.savedWeek">Diese Woche</div></div>
         </div>
       </div>
 
@@ -174,48 +174,48 @@
           </svg>
         </div>
         <div class="ai-text">
-          <div class="ai-title">Frag Surya AI <span class="ai-badge">NEU</span></div>
-          <div class="ai-sub">KI-Assistentin für Solar-Probleme — antwortet sofort</div>
+          <div class="ai-title"><span data-i18n="ai.askSurya">Frag Surya AI</span> <span class="ai-badge" data-i18n="ai.new">NEU</span></div>
+          <div class="ai-sub" data-i18n="ai.ctaSubHome">KI-Assistentin für Solar-Probleme — antwortet sofort</div>
         </div>
         <span class="ai-arrow">→</span>
       </button>
 
       <!-- Quick Actions -->
-      <div class="section-title">Schnellaktionen</div>
+      <div class="section-title" data-i18n="home.quickActions">Schnellaktionen</div>
       <div class="quick-actions">
         <button class="action-btn action-emerg" onclick="app.emergency()">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Notfall</span>
+          <span data-i18n="home.emergency">Notfall</span>
         </button>
         <button class="action-btn action-self" onclick="app.showView('selfhelp')">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          <span>Selbsthilfe</span>
+          <span data-i18n="nav.selfhelp">Selbsthilfe</span>
         </button>
         <button class="action-btn action-report" onclick="app.showView('report')">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          <span>Melden</span>
+          <span data-i18n="home.report">Melden</span>
         </button>
         <button class="action-btn action-call" onclick="app.showView('technicians')">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          <span>Techniker</span>
+          <span data-i18n="home.technicianBtn">Techniker</span>
         </button>
       </div>
 
       <!-- Upcoming appointment -->
       <div class="card" id="next-appt-card">
-        <div class="card-head"><h3>Nächster Termin</h3><button class="link-btn" onclick="app.showView('appointments')">Alle →</button></div>
+        <div class="card-head"><h3 data-i18n="home.nextAppt">Nächster Termin</h3><button class="link-btn" data-i18n="home.allLink" onclick="app.showView('appointments')">Alle →</button></div>
         <div id="next-appointment"></div>
       </div>
 
       <!-- Recent Reports -->
       <div class="card">
-        <div class="card-head"><h3>Letzte Meldungen</h3><button class="link-btn" onclick="app.showView('history')">Verlauf →</button></div>
+        <div class="card-head"><h3 data-i18n="home.recentReports">Letzte Meldungen</h3><button class="link-btn" data-i18n="home.history" onclick="app.showView('history')">Verlauf →</button></div>
         <div id="recent-reports" class="report-list"></div>
       </div>
 
       <!-- Community ticker -->
       <div class="card">
-        <div class="card-head"><h3>Aus der Gemeinde</h3><button class="link-btn" onclick="app.showView('community')">Forum →</button></div>
+        <div class="card-head"><h3 data-i18n="home.community">Aus der Gemeinde</h3><button class="link-btn" data-i18n="home.forum" onclick="app.showView('community')">Forum →</button></div>
         <div id="community-ticker"></div>
       </div>
     </div>
@@ -223,8 +223,8 @@
     <!-- ===== SELF-HELP ===== -->
     <div id="view-selfhelp" class="view">
       <header class="app-header">
-        <h1>Selbsthilfe</h1>
-        <p class="subtitle">Häufige Probleme Schritt für Schritt selbst lösen.</p>
+        <h1 data-i18n="sh.title">Selbsthilfe</h1>
+        <p class="subtitle" data-i18n="sh.subtitle">Häufige Probleme Schritt für Schritt selbst lösen.</p>
       </header>
 
       <button class="ai-cta ai-cta-large" onclick="app.openAi()">
@@ -237,16 +237,16 @@
           </svg>
         </div>
         <div class="ai-text">
-          <div class="ai-title">Frag Surya AI</div>
-          <div class="ai-sub">Beschreibe dein Problem in eigenen Worten</div>
+          <div class="ai-title" data-i18n="ai.askSurya">Frag Surya AI</div>
+          <div class="ai-sub" data-i18n="ai.ctaSubHelp">Beschreibe dein Problem in eigenen Worten</div>
         </div>
         <span class="ai-arrow">→</span>
       </button>
 
-      <div class="section-title">Geführte Diagnose</div>
+      <div class="section-title" data-i18n="sh.guided">Geführte Diagnose</div>
       <div class="wizard-grid" id="wizard-grid"></div>
 
-      <div class="section-title">Wissensartikel</div>
+      <div class="section-title" data-i18n="sh.articles">Wissensartikel</div>
       <div class="kb-filters" id="kb-filters"></div>
       <div class="kb-list" id="kb-list"></div>
     </div>
@@ -264,7 +264,7 @@
         </div>
         <div class="ai-header-info">
           <div class="ai-header-name">Surya AI</div>
-          <div class="ai-header-status"><span class="ai-online-dot"></span> Online · Offline-fähig</div>
+          <div class="ai-header-status"><span class="ai-online-dot"></span> <span data-i18n="ai.status">Online · Offline-fähig</span></div>
         </div>
         <button class="icon-btn" onclick="app.clearChat()" aria-label="Chat löschen">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
@@ -288,7 +288,7 @@
           </svg>
         </label>
         <input type="file" id="chat-file" accept="image/*" capture="environment" onchange="app.onChatFile(event)" hidden>
-        <input type="text" id="chat-input" placeholder="Frag Surya AI..." onkeydown="app.chatKey(event)">
+        <input type="text" id="chat-input" placeholder="Frag Surya AI..." data-i18n-ph="ai.placeholder" onkeydown="app.chatKey(event)">
         <button class="chat-send" onclick="app.chatSend()" aria-label="Senden">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
         </button>
@@ -301,7 +301,7 @@
         <button class="back-btn" onclick="app.showView('selfhelp')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2 id="wizard-title">Selbsthilfe</h2>
+        <h2 id="wizard-title" data-i18n="sh.title">Selbsthilfe</h2>
       </header>
       <div class="wizard-progress"><div class="wp-bar" id="wp-bar"></div></div>
       <div id="wizard-step" class="wizard-step"></div>
@@ -313,7 +313,7 @@
         <button class="back-btn" onclick="app.showView('selfhelp')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2 id="article-title">Artikel</h2>
+        <h2 id="article-title">Article</h2>
       </header>
       <article id="article-body" class="article"></article>
     </div>
@@ -321,23 +321,23 @@
     <!-- ===== SUPPORT (tickets + technicians + appointments) ===== -->
     <div id="view-support" class="view">
       <header class="app-header">
-        <h1>Support</h1>
-        <p class="subtitle">Tickets, Techniker und Termine.</p>
+        <h1 data-i18n="sup.title">Support</h1>
+        <p class="subtitle" data-i18n="sup.subtitle">Tickets, Techniker und Termine.</p>
       </header>
 
       <div class="tab-row">
-        <button class="tab-pill active" data-tab="tickets" onclick="app.switchSupportTab(this)">Tickets</button>
-        <button class="tab-pill" data-tab="techs" onclick="app.switchSupportTab(this)">Techniker</button>
-        <button class="tab-pill" data-tab="appts" onclick="app.switchSupportTab(this)">Termine</button>
+        <button class="tab-pill active" data-tab="tickets" data-i18n="sup.tickets" onclick="app.switchSupportTab(this)">Tickets</button>
+        <button class="tab-pill" data-tab="techs" data-i18n="sup.techs" onclick="app.switchSupportTab(this)">Techniker</button>
+        <button class="tab-pill" data-tab="appts" data-i18n="sup.appts" onclick="app.switchSupportTab(this)">Termine</button>
       </div>
 
       <div id="support-tickets" class="support-pane">
         <div class="support-summary">
-          <div class="ss-stat"><div class="ss-val" id="tic-open">0</div><div class="ss-lbl">Offen</div></div>
-          <div class="ss-stat"><div class="ss-val" id="tic-prog">0</div><div class="ss-lbl">In Arbeit</div></div>
-          <div class="ss-stat"><div class="ss-val" id="tic-done">0</div><div class="ss-lbl">Behoben</div></div>
+          <div class="ss-stat"><div class="ss-val" id="tic-open">0</div><div class="ss-lbl" data-i18n="sup.open">Offen</div></div>
+          <div class="ss-stat"><div class="ss-val" id="tic-prog">0</div><div class="ss-lbl" data-i18n="sup.progress">In Arbeit</div></div>
+          <div class="ss-stat"><div class="ss-val" id="tic-done">0</div><div class="ss-lbl" data-i18n="sup.done">Behoben</div></div>
         </div>
-        <button class="primary-btn" onclick="app.showView('report')">+ Neues Ticket</button>
+        <button class="primary-btn" data-i18n="sup.newTicket" onclick="app.showView('report')">+ Neues Ticket</button>
         <div id="ticket-list" class="report-list"></div>
       </div>
 
@@ -350,7 +350,7 @@
 
       <div id="support-appts" class="support-pane hidden">
         <div id="appointment-list" class="appt-list"></div>
-        <button class="primary-btn" onclick="app.scheduleAppointment()">+ Termin vereinbaren</button>
+        <button class="primary-btn" data-i18n="sup.newAppt" onclick="app.scheduleAppointment()">+ Termin vereinbaren</button>
       </div>
     </div>
 
@@ -360,7 +360,7 @@
         <button class="back-btn" onclick="app.showView('support')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Ticket-Details</h2>
+        <h2 data-i18n="tic.title">Ticket-Details</h2>
       </header>
       <div id="ticket-detail"></div>
     </div>
@@ -368,14 +368,14 @@
     <!-- ===== SYSTEM (devices + analytics + maintenance) ===== -->
     <div id="view-system" class="view">
       <header class="app-header">
-        <h1>Mein System</h1>
-        <p class="subtitle">Geräte, Energie & Wartung.</p>
+        <h1 data-i18n="sys.title">Mein System</h1>
+        <p class="subtitle" data-i18n="sys.subtitle">Geräte, Energie & Wartung.</p>
       </header>
 
       <div class="tab-row">
-        <button class="tab-pill active" data-tab="devices" onclick="app.switchSystemTab(this)">Geräte</button>
-        <button class="tab-pill" data-tab="analytics" onclick="app.switchSystemTab(this)">Analyse</button>
-        <button class="tab-pill" data-tab="maint" onclick="app.switchSystemTab(this)">Wartung</button>
+        <button class="tab-pill active" data-tab="devices" data-i18n="sys.devices" onclick="app.switchSystemTab(this)">Geräte</button>
+        <button class="tab-pill" data-tab="analytics" data-i18n="sys.analytics" onclick="app.switchSystemTab(this)">Analyse</button>
+        <button class="tab-pill" data-tab="maint" data-i18n="sys.maint" onclick="app.switchSystemTab(this)">Wartung</button>
       </div>
 
       <div id="system-devices" class="support-pane">
@@ -385,30 +385,30 @@
 
       <div id="system-analytics" class="support-pane hidden">
         <div class="card">
-          <div class="card-head"><h3>Produktion (14 Tage)</h3></div>
+          <div class="card-head"><h3 data-i18n="sys.production">Produktion (14 Tage)</h3></div>
           <div id="ana-energy"></div>
         </div>
         <div class="card">
-          <div class="card-head"><h3>Batterie-Verlauf</h3></div>
+          <div class="card-head"><h3 data-i18n="sys.battTrend">Batterie-Verlauf</h3></div>
           <div id="ana-battery"></div>
         </div>
         <div class="card">
-          <div class="card-head"><h3>Wirkung</h3></div>
+          <div class="card-head"><h3 data-i18n="sys.impact">Wirkung</h3></div>
           <div class="impact-grid" id="impact-grid"></div>
         </div>
       </div>
 
       <div id="system-maint" class="support-pane hidden">
         <div class="card">
-          <div class="card-head"><h3>Nächste Wartung</h3></div>
+          <div class="card-head"><h3 data-i18n="sys.nextMaint">Nächste Wartung</h3></div>
           <div id="next-maint"></div>
         </div>
         <div class="card">
-          <div class="card-head"><h3>Empfohlene Aufgaben</h3></div>
+          <div class="card-head"><h3 data-i18n="sys.recTasks">Empfohlene Aufgaben</h3></div>
           <ul id="maint-tasks" class="maint-list"></ul>
         </div>
         <div class="card">
-          <div class="card-head"><h3>Wartungs-Historie</h3></div>
+          <div class="card-head"><h3 data-i18n="sys.maintHistory">Wartungs-Historie</h3></div>
           <div id="maint-history" class="report-list"></div>
         </div>
       </div>
@@ -420,7 +420,7 @@
         <button class="back-btn" onclick="app.showView('system')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2 id="device-title">Gerät</h2>
+        <h2 id="device-title">Device</h2>
       </header>
       <div id="device-detail"></div>
     </div>
@@ -428,7 +428,7 @@
     <!-- ===== MORE: COMMUNITY / LEARNING / SETTINGS / ALERTS ===== -->
     <div id="view-more" class="view">
       <header class="app-header">
-        <h1>Mehr</h1>
+        <h1 data-i18n="more.title">Mehr</h1>
       </header>
 
       <div class="menu-list">
@@ -436,50 +436,50 @@
           <div class="mi-icon mi-ai">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 11h.01"/><path d="M16 11h.01"/><path d="M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/><path d="M12 3v3"/></svg>
           </div>
-          <div class="mi-text"><div class="mi-title">Surya AI <span class="ai-badge">NEU</span></div><div class="mi-sub">KI-Assistentin im Chat</div></div>
+          <div class="mi-text"><div class="mi-title"><span data-i18n="more.aiTitle">Surya AI</span> <span class="ai-badge" data-i18n="ai.new">NEU</span></div><div class="mi-sub" data-i18n="more.aiSub">KI-Assistentin im Chat</div></div>
           <span class="mi-arrow">›</span>
         </button>
         <button class="menu-item" onclick="app.showView('community')">
           <div class="mi-icon mi-blue">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-          <div class="mi-text"><div class="mi-title">Gemeinde-Forum</div><div class="mi-sub">Austausch mit Nachbarn</div></div>
+          <div class="mi-text"><div class="mi-title" data-i18n="more.forumTitle">Gemeinde-Forum</div><div class="mi-sub" data-i18n="more.forumSub">Austausch mit Nachbarn</div></div>
           <span class="mi-arrow">›</span>
         </button>
         <button class="menu-item" onclick="app.showView('learning')">
           <div class="mi-icon mi-green">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
           </div>
-          <div class="mi-text"><div class="mi-title">Lernzentrum</div><div class="mi-sub">Module mit Quiz</div></div>
+          <div class="mi-text"><div class="mi-title" data-i18n="more.lrnTitle">Lernzentrum</div><div class="mi-sub" data-i18n="more.lrnSub">Module mit Quiz</div></div>
           <span class="mi-arrow">›</span>
         </button>
         <button class="menu-item" onclick="app.showView('alerts')">
           <div class="mi-icon mi-orange">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           </div>
-          <div class="mi-text"><div class="mi-title">Benachrichtigungen</div><div class="mi-sub">Warnungen & Hinweise</div></div>
+          <div class="mi-text"><div class="mi-title" data-i18n="more.alTitle">Benachrichtigungen</div><div class="mi-sub" data-i18n="more.alSub">Warnungen & Hinweise</div></div>
           <span class="mi-arrow">›</span>
         </button>
         <button class="menu-item" onclick="app.showView('analytics')">
           <div class="mi-icon mi-yellow">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           </div>
-          <div class="mi-text"><div class="mi-title">Ersparnis & Impact</div><div class="mi-sub">CO₂ und ₹ gespart</div></div>
+          <div class="mi-text"><div class="mi-title" data-i18n="more.impTitle">Ersparnis & Impact</div><div class="mi-sub" data-i18n="more.impSub">CO₂ und ₹ gespart</div></div>
           <span class="mi-arrow">›</span>
         </button>
         <button class="menu-item" onclick="app.showView('settings')">
           <div class="mi-icon mi-gray">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </div>
-          <div class="mi-text"><div class="mi-title">Einstellungen</div><div class="mi-sub">Sprache, Rolle, Profil</div></div>
+          <div class="mi-text"><div class="mi-title" data-i18n="more.setTitle">Einstellungen</div><div class="mi-sub" data-i18n="more.setSub">Sprache, Rolle, Profil</div></div>
           <span class="mi-arrow">›</span>
         </button>
       </div>
 
       <div class="app-info">
-        <p><strong>SolarConnect</strong> v2.0 · India Edition</p>
-        <p>Offline-fähig · Open Source · ⚡ SDG 7 &amp; 9</p>
-        <p style="margin-top:8px;opacity:0.7">Masterprojekt 2025/26 — IT &amp; Sustainability</p>
+        <p data-i18n="app.version"><strong>SolarConnect</strong> v2.0 · India Edition</p>
+        <p data-i18n="app.tagline">Offline-fähig · Open Source · ⚡ SDG 7 &amp; 9</p>
+        <p style="margin-top:8px;opacity:0.7" data-i18n="app.masterNote">Masterprojekt 2025/26 — IT &amp; Sustainability</p>
       </div>
     </div>
 
@@ -489,22 +489,22 @@
         <button class="back-btn" onclick="app.showView('home')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Analyse &amp; Wirkung</h2>
+        <h2 data-i18n="ana.title">Analyse &amp; Wirkung</h2>
       </header>
       <div class="card">
-        <div class="card-head"><h3>Produktion vs Verbrauch</h3></div>
+        <div class="card-head"><h3 data-i18n="ana.prodVsCons">Produktion vs Verbrauch</h3></div>
         <div id="ana-energy2"></div>
       </div>
       <div class="card">
-        <div class="card-head"><h3>Wirkung in Zahlen</h3></div>
+        <div class="card-head"><h3 data-i18n="ana.impactNumbers">Wirkung in Zahlen</h3></div>
         <div class="impact-grid" id="impact-grid2"></div>
       </div>
       <div class="card">
-        <div class="card-head"><h3>SDG-Beitrag</h3></div>
+        <div class="card-head"><h3 data-i18n="ana.sdgContrib">SDG-Beitrag</h3></div>
         <div class="sdg-list">
-          <div class="sdg-item"><div class="sdg-num sdg-7">7</div><div><strong>Bezahlbare und saubere Energie</strong><br><span class="muted">Zugang zu zuverlässigem Strom für ländliche Haushalte</span></div></div>
-          <div class="sdg-item"><div class="sdg-num sdg-9">9</div><div><strong>Industrie, Innovation und Infrastruktur</strong><br><span class="muted">Robuste Off-Grid-Infrastruktur durch Community-Tech</span></div></div>
-          <div class="sdg-item"><div class="sdg-num sdg-13">13</div><div><strong>Maßnahmen zum Klimaschutz</strong><br><span class="muted">CO₂-Reduktion gegenüber Diesel-Generatoren</span></div></div>
+          <div class="sdg-item"><div class="sdg-num sdg-7">7</div><div><strong data-i18n="sdg.7t">Bezahlbare und saubere Energie</strong><br><span class="muted" data-i18n="sdg.7d">Zugang zu zuverlässigem Strom für ländliche Haushalte</span></div></div>
+          <div class="sdg-item"><div class="sdg-num sdg-9">9</div><div><strong data-i18n="sdg.9t">Industrie, Innovation und Infrastruktur</strong><br><span class="muted" data-i18n="sdg.9d">Robuste Off-Grid-Infrastruktur durch Community-Tech</span></div></div>
+          <div class="sdg-item"><div class="sdg-num sdg-13">13</div><div><strong data-i18n="sdg.13t">Maßnahmen zum Klimaschutz</strong><br><span class="muted" data-i18n="sdg.13d">CO₂-Reduktion gegenüber Diesel-Generatoren</span></div></div>
         </div>
       </div>
     </div>
@@ -515,11 +515,11 @@
         <button class="back-btn" onclick="app.showView('more')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Gemeinde-Forum</h2>
+        <h2 data-i18n="com.title">Gemeinde-Forum</h2>
       </header>
       <div class="post-composer">
-        <textarea id="post-input" placeholder="Teile etwas mit deiner Gemeinde..." rows="2"></textarea>
-        <button class="primary-btn" onclick="app.addPost()">Posten</button>
+        <textarea id="post-input" placeholder="Teile etwas mit deiner Gemeinde..." data-i18n-ph="com.placeholder" rows="2"></textarea>
+        <button class="primary-btn" data-i18n="com.post" onclick="app.addPost()">Posten</button>
       </div>
       <div id="post-list" class="post-list"></div>
     </div>
@@ -530,12 +530,12 @@
         <button class="back-btn" onclick="app.showView('more')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Lernzentrum</h2>
+        <h2 data-i18n="lrn.title">Lernzentrum</h2>
       </header>
       <div class="learning-progress">
         <div id="lp-ring"></div>
         <div>
-          <div class="muted">Dein Fortschritt</div>
+          <div class="muted" data-i18n="lrn.progress">Dein Fortschritt</div>
           <div id="lp-text" class="lp-text">0 von 0 Modulen</div>
         </div>
       </div>
@@ -548,7 +548,7 @@
         <button class="back-btn" onclick="app.showView('learning')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2 id="lesson-title">Lektion</h2>
+        <h2 id="lesson-title" data-i18n="lrn.lesson">Lektion</h2>
       </header>
       <div class="wizard-progress"><div class="wp-bar" id="lp-bar"></div></div>
       <div id="lesson-content"></div>
@@ -560,7 +560,7 @@
         <button class="back-btn" onclick="app.showView('more')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Benachrichtigungen</h2>
+        <h2 data-i18n="al.title">Benachrichtigungen</h2>
       </header>
       <div id="alert-list" class="report-list"></div>
     </div>
@@ -571,7 +571,7 @@
         <button class="back-btn" onclick="app.showView('support')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Alle Termine</h2>
+        <h2 data-i18n="sup.allAppts">Alle Termine</h2>
       </header>
       <div id="all-appts" class="appt-list"></div>
     </div>
@@ -582,45 +582,45 @@
         <button class="back-btn" onclick="app.showView('home')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Problem melden</h2>
+        <h2 data-i18n="rep.title">Problem melden</h2>
       </header>
 
       <div class="report-form">
         <div class="ai-hint" onclick="app.openAi()">
           <span class="ai-hint-icon">✨</span>
           <div>
-            <strong>Erst die KI fragen?</strong><br>
-            <span class="muted">Vielleicht löst Surya AI dein Problem in Sekunden.</span>
+            <strong data-i18n="ai.hint.title">Erst die KI fragen?</strong><br>
+            <span class="muted" data-i18n="ai.hint.sub">Vielleicht löst Surya AI dein Problem in Sekunden.</span>
           </div>
           <span class="ai-arrow">→</span>
         </div>
 
-        <p class="form-hint">Was ist das Problem?</p>
+        <p class="form-hint" data-i18n="rep.what">Was ist das Problem?</p>
         <div class="problem-grid">
-          <button class="problem-btn" data-type="power_outage"   onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="#e53935"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span>Kein Strom</span></button>
-          <button class="problem-btn" data-type="battery_issue"  onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/><line x1="6" y1="10" x2="14" y2="14"/><line x1="6" y1="14" x2="14" y2="10"/></svg><span>Batterie</span></button>
-          <button class="problem-btn" data-type="panel_damage"   onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="7" y1="7" x2="17" y2="17" stroke-width="3"/></svg><span>Panel kaputt</span></button>
-          <button class="problem-btn" data-type="inverter_issue" onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9l3 3-3 3"/><path d="M16 9l-3 3 3 3"/></svg><span>Wechselrichter</span></button>
-          <button class="problem-btn" data-type="wiring_issue"   onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><path d="M4 20L8 4"/><path d="M12 20L16 4"/><path d="M2 12h20"/></svg><span>Kabel</span></button>
-          <button class="problem-btn" data-type="other"          onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Sonstiges</span></button>
+          <button class="problem-btn" data-type="power_outage"   onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="#e53935"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span data-i18n="prob.power_outage">Kein Strom</span></button>
+          <button class="problem-btn" data-type="battery_issue"  onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/><line x1="6" y1="10" x2="14" y2="14"/><line x1="6" y1="14" x2="14" y2="10"/></svg><span data-i18n="prob.battery_issue">Batterie</span></button>
+          <button class="problem-btn" data-type="panel_damage"   onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="7" y1="7" x2="17" y2="17" stroke-width="3"/></svg><span data-i18n="prob.panel_damage">Panel kaputt</span></button>
+          <button class="problem-btn" data-type="inverter_issue" onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9l3 3-3 3"/><path d="M16 9l-3 3 3 3"/></svg><span data-i18n="prob.inverter_issue">Wechselrichter</span></button>
+          <button class="problem-btn" data-type="wiring_issue"   onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><path d="M4 20L8 4"/><path d="M12 20L16 4"/><path d="M2 12h20"/></svg><span data-i18n="prob.wiring_issue">Kabel</span></button>
+          <button class="problem-btn" data-type="other"          onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span data-i18n="prob.other">Sonstiges</span></button>
         </div>
 
         <div id="severity-section" class="hidden">
-          <p class="form-hint">Wie dringend?</p>
+          <p class="form-hint" data-i18n="rep.urgent">Wie dringend?</p>
           <div class="severity-options">
-            <button class="severity-btn" data-severity="low"    onclick="app.selectSeverity(this)"><div class="severity-dot severity-low"></div><span>Nicht dringend</span></button>
-            <button class="severity-btn" data-severity="medium" onclick="app.selectSeverity(this)"><div class="severity-dot severity-medium"></div><span>Mittel</span></button>
-            <button class="severity-btn" data-severity="high"   onclick="app.selectSeverity(this)"><div class="severity-dot severity-high"></div><span>Dringend!</span></button>
+            <button class="severity-btn" data-severity="low"    onclick="app.selectSeverity(this)"><div class="severity-dot severity-low"></div><span data-i18n="rep.urgency.low">Nicht dringend</span></button>
+            <button class="severity-btn" data-severity="medium" onclick="app.selectSeverity(this)"><div class="severity-dot severity-medium"></div><span data-i18n="rep.urgency.medium">Mittel</span></button>
+            <button class="severity-btn" data-severity="high"   onclick="app.selectSeverity(this)"><div class="severity-dot severity-high"></div><span data-i18n="rep.urgency.high">Dringend!</span></button>
           </div>
         </div>
 
         <div id="note-section" class="hidden">
-          <p class="form-hint">Notiz (optional):</p>
-          <textarea id="report-note" rows="3" placeholder="Beschreibe das Problem..."></textarea>
-          <label class="checkbox-row"><input type="checkbox" id="report-photo"> <span>Foto später anhängen</span></label>
+          <p class="form-hint" data-i18n="rep.note">Notiz (optional):</p>
+          <textarea id="report-note" rows="3" placeholder="Beschreibe das Problem..." data-i18n-ph="rep.notePlaceholder"></textarea>
+          <label class="checkbox-row"><input type="checkbox" id="report-photo"> <span data-i18n="rep.photoLater">Foto später anhängen</span></label>
           <button class="submit-btn" onclick="app.submitReport()">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            <span>Ticket erstellen</span>
+            <span data-i18n="rep.createTicket">Ticket erstellen</span>
           </button>
         </div>
       </div>
@@ -632,7 +632,7 @@
         <button class="back-btn" onclick="app.showView('home')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Meldungsverlauf</h2>
+        <h2 data-i18n="his.title">Meldungsverlauf</h2>
       </header>
       <div id="history-list" class="report-list"></div>
     </div>
@@ -643,7 +643,7 @@
         <button class="back-btn" onclick="app.showView('support')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Techniker-Netzwerk</h2>
+        <h2 data-i18n="sup.network">Techniker-Netzwerk</h2>
       </header>
       <div id="technician-list-full" class="technician-list"></div>
       <button class="fab" onclick="app.showAddTechnician()">
@@ -657,14 +657,14 @@
         <button class="back-btn" onclick="app.showView('more')">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <h2>Einstellungen</h2>
+        <h2 data-i18n="set.title">Einstellungen</h2>
       </header>
 
       <div class="settings-form">
-        <label class="setting-label">Dorf / Stadt</label>
+        <label class="setting-label" data-i18n="set.community">Dorf / Stadt</label>
         <input type="text" id="setting-community" placeholder="z.B. Khandala" class="setting-input">
 
-        <label class="setting-label">Bundesstaat</label>
+        <label class="setting-label" data-i18n="set.state">Bundesstaat</label>
         <select id="setting-state" class="setting-input">
           <option>Maharashtra</option><option>Tamil Nadu</option><option>Karnataka</option>
           <option>Gujarat</option><option>Rajasthan</option><option>West Bengal</option>
@@ -672,7 +672,7 @@
           <option>Odisha</option><option>Kerala</option><option>Madhya Pradesh</option>
         </select>
 
-        <label class="setting-label">Sprache</label>
+        <label class="setting-label" data-i18n="set.lang">Sprache</label>
         <select id="setting-language" class="setting-input">
           <option value="de">Deutsch</option>
           <option value="en">English</option>
@@ -682,41 +682,41 @@
           <option value="te">తెలుగు (Telugu)</option>
         </select>
 
-        <label class="setting-label">Rolle</label>
+        <label class="setting-label" data-i18n="set.role">Rolle</label>
         <div class="role-options">
           <button class="role-btn active" data-role="user" onclick="app.selectRole(this)">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Nutzer:in</span>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span data-i18n="role.user">Nutzer:in</span>
           </button>
           <button class="role-btn" data-role="technician" onclick="app.selectRole(this)">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Techniker</span>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span data-i18n="role.technician">Techniker</span>
           </button>
           <button class="role-btn" data-role="admin" onclick="app.selectRole(this)">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3-3-3 3"/><path d="M19 8v8"/></svg><span>Admin</span>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3-3-3 3"/><path d="M19 8v8"/></svg><span data-i18n="role.admin">Admin</span>
           </button>
         </div>
 
-        <label class="setting-label">Darstellung</label>
+        <label class="setting-label" data-i18n="set.theme">Darstellung</label>
         <div class="theme-row">
-          <button class="theme-btn active" data-theme="light" onclick="app.setTheme(this)">☀ Hell</button>
-          <button class="theme-btn" data-theme="dark"  onclick="app.setTheme(this)">🌙 Dunkel</button>
-          <button class="theme-btn" data-theme="auto"  onclick="app.setTheme(this)">⚙ Auto</button>
+          <button class="theme-btn active" data-theme="light" data-i18n="set.themeLight" onclick="app.setTheme(this)">☀ Hell</button>
+          <button class="theme-btn" data-theme="dark" data-i18n="set.themeDark" onclick="app.setTheme(this)">🌙 Dunkel</button>
+          <button class="theme-btn" data-theme="auto" data-i18n="set.themeAuto" onclick="app.setTheme(this)">⚙ Auto</button>
         </div>
 
-        <label class="setting-label">Hilfen</label>
-        <div class="toggle-row"><span>Vibration bei Aktionen</span><label class="switch"><input type="checkbox" id="set-vibrate" checked><span class="slider"></span></label></div>
-        <div class="toggle-row"><span>Hoher Kontrast</span><label class="switch"><input type="checkbox" id="set-contrast"><span class="slider"></span></label></div>
-        <div class="toggle-row"><span>Große Schrift</span><label class="switch"><input type="checkbox" id="set-large"><span class="slider"></span></label></div>
+        <label class="setting-label" data-i18n="set.helpers">Hilfen</label>
+        <div class="toggle-row"><span data-i18n="set.vibrate">Vibration bei Aktionen</span><label class="switch"><input type="checkbox" id="set-vibrate" checked><span class="slider"></span></label></div>
+        <div class="toggle-row"><span data-i18n="set.contrast">Hoher Kontrast</span><label class="switch"><input type="checkbox" id="set-contrast"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span data-i18n="set.large">Große Schrift</span><label class="switch"><input type="checkbox" id="set-large"><span class="slider"></span></label></div>
 
         <button class="save-btn" onclick="app.saveSettings()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          Speichern
+          <span data-i18n="set.save">Speichern</span>
         </button>
 
-        <button class="ghost-btn" onclick="app.resetDemo()">Demo-Daten zurücksetzen</button>
+        <button class="ghost-btn" data-i18n="set.resetDemo" onclick="app.resetDemo()">Demo-Daten zurücksetzen</button>
 
         <div class="app-info">
-          <p>SolarConnect v2.0 — India Edition</p>
-          <p>Offline-fähig · IndexedDB · Service Worker</p>
+          <p data-i18n="app.version">SolarConnect v2.0 — India Edition</p>
+          <p data-i18n="app.tagline">Offline-fähig · IndexedDB · Service Worker</p>
         </div>
       </div>
     </div>
@@ -749,40 +749,40 @@
   <!-- ============= MODALS ============= -->
   <div id="modal-technician" class="modal hidden">
     <div class="modal-content">
-      <h3>Techniker hinzufügen</h3>
-      <input type="text" id="tech-name"      placeholder="Name"          class="setting-input">
-      <input type="tel"  id="tech-phone"     placeholder="+91 ..."        class="setting-input">
-      <input type="text" id="tech-specialty" placeholder="Fachgebiet"    class="setting-input">
-      <input type="text" id="tech-district"  placeholder="Ort / Distrikt" class="setting-input">
+      <h3 data-i18n="mod.addTech">Techniker hinzufügen</h3>
+      <input type="text" id="tech-name"      placeholder="Name"          data-i18n-ph="mod.name"     class="setting-input">
+      <input type="tel"  id="tech-phone"     placeholder="+91 ..."                                  class="setting-input">
+      <input type="text" id="tech-specialty" placeholder="Fachgebiet"    data-i18n-ph="mod.spec"     class="setting-input">
+      <input type="text" id="tech-district"  placeholder="Ort / Distrikt" data-i18n-ph="mod.district" class="setting-input">
       <div class="modal-actions">
-        <button class="modal-cancel"  onclick="app.closeModal()">Abbrechen</button>
-        <button class="modal-confirm" onclick="app.addTechnician()">Hinzufügen</button>
+        <button class="modal-cancel"  data-i18n="mod.cancel" onclick="app.closeModal()">Abbrechen</button>
+        <button class="modal-confirm" data-i18n="mod.add"    onclick="app.addTechnician()">Hinzufügen</button>
       </div>
     </div>
   </div>
 
   <div id="modal-appointment" class="modal hidden">
     <div class="modal-content">
-      <h3>Termin vereinbaren</h3>
-      <input type="text" id="appt-title" placeholder="Titel (z.B. Halbjährliche Wartung)" class="setting-input">
+      <h3 data-i18n="mod.scheduleAppt">Termin vereinbaren</h3>
+      <input type="text" id="appt-title" placeholder="Titel (z.B. Halbjährliche Wartung)" data-i18n-ph="mod.apptTitle" class="setting-input">
       <select id="appt-tech" class="setting-input"></select>
       <input type="date" id="appt-date" class="setting-input">
-      <textarea id="appt-note" rows="2" placeholder="Notiz (optional)" class="setting-input"></textarea>
+      <textarea id="appt-note" rows="2" placeholder="Notiz (optional)" data-i18n-ph="mod.noteOpt" class="setting-input"></textarea>
       <div class="modal-actions">
-        <button class="modal-cancel"  onclick="app.closeApptModal()">Abbrechen</button>
-        <button class="modal-confirm" onclick="app.saveAppointment()">Speichern</button>
+        <button class="modal-cancel"  data-i18n="mod.cancel" onclick="app.closeApptModal()">Abbrechen</button>
+        <button class="modal-confirm" data-i18n="mod.save"   onclick="app.saveAppointment()">Speichern</button>
       </div>
     </div>
   </div>
 
   <div id="modal-emergency" class="modal hidden">
     <div class="modal-content emergency-modal">
-      <h3>⚠ Notfall-Modus</h3>
-      <p>Bei Lebensgefahr, Brand oder schweren Verletzungen sofort den Notruf wählen.</p>
-      <a href="tel:112" class="emerg-call">📞 Notruf 112</a>
-      <p class="muted" style="margin-top:16px">Andernfalls direkt einen Techniker rufen:</p>
+      <h3 data-i18n="mod.emergency">⚠ Notfall-Modus</h3>
+      <p data-i18n="mod.emergencyTxt">Bei Lebensgefahr, Brand oder schweren Verletzungen sofort den Notruf wählen.</p>
+      <a href="tel:112" class="emerg-call" data-i18n="mod.callEmerg">📞 Notruf 112</a>
+      <p class="muted" style="margin-top:16px" data-i18n="mod.otherwise">Andernfalls direkt einen Techniker rufen:</p>
       <div id="emerg-tech-list"></div>
-      <button class="modal-cancel" style="margin-top:12px;width:100%" onclick="app.closeEmergency()">Schließen</button>
+      <button class="modal-cancel" style="margin-top:12px;width:100%" data-i18n="mod.close" onclick="app.closeEmergency()">Schließen</button>
     </div>
   </div>
 
@@ -791,6 +791,7 @@
     <span id="toast-message">Erfolgreich!</span>
   </div>
 
+  <script src="js/i18n.js"></script>
   <script src="js/content.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/ai.js"></script>
