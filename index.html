@@ -134,6 +134,9 @@
         </div>
       </div>
 
+      <!-- Monsoon Banner (saisonal) -->
+      <div id="monsoon-banner" class="hidden"></div>
+
       <!-- Smart Hint (Wetter+Sensor Mismatch / Panel Verschmutzung etc.) -->
       <div id="smart-hint" class="hidden"></div>
 
@@ -216,6 +219,9 @@
         </div>
       </div>
 
+
+      <!-- Smart Load Planner (basiert auf Wetter-Forecast) -->
+      <div id="load-planner" class="hidden"></div>
 
       <!-- Quick Actions -->
       <div class="section-title" data-i18n="home.quickActions">Schnellaktionen</div>
@@ -461,6 +467,10 @@
         </button>
         <h2 data-i18n="ana.title">Analyse &amp; Wirkung</h2>
       </header>
+
+      <!-- Community-Stats (aggregierte Dorf-Zahlen) -->
+      <div id="community-stats"></div>
+
       <div class="card">
         <div class="card-head"><h3 data-i18n="ana.prodVsCons">Produktion vs Verbrauch</h3></div>
         <div id="ana-energy2"></div>
@@ -704,6 +714,16 @@
         <div class="toggle-row"><span data-i18n="set.vibrate">Vibration bei Aktionen</span><label class="switch"><input type="checkbox" id="set-vibrate" checked><span class="slider"></span></label></div>
         <div class="toggle-row"><span data-i18n="set.contrast">Hoher Kontrast</span><label class="switch"><input type="checkbox" id="set-contrast"><span class="slider"></span></label></div>
         <div class="toggle-row"><span data-i18n="set.large">Große Schrift</span><label class="switch"><input type="checkbox" id="set-large"><span class="slider"></span></label></div>
+
+        <label class="setting-label" data-i18n="set.demo">Demo</label>
+        <div class="toggle-row">
+          <span data-i18n="set.monsoonDemo">Monsun-Banner anzeigen (Demo)</span>
+          <select id="set-monsoon" class="setting-input" style="width:auto;padding:6px 10px;font-size:13px">
+            <option value="off">Auto</option>
+            <option value="pre">Vor-Monsun</option>
+            <option value="active">Monsun aktiv</option>
+          </select>
+        </div>
 
         <div class="api-section">
           <div class="api-section-title">🔌 API-Schlüssel</div>

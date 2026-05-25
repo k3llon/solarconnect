@@ -86,6 +86,8 @@ const app = {
     this.setupSync();
     // Route through showView so sensor/weather pollers start on first page-load
     this.showView('home');
+    // Trigger guided tour for users who already onboarded but never saw it
+    if (await db.getSetting('onboarded')) this.maybeStartTour();
   },
 
   async checkOnboarding() {
@@ -120,6 +122,8 @@ const app = {
     document.getElementById('onboarding').classList.add('hidden');
     await this.loadSettings();
     await this.loadHome();
+    // First-time guided tour
+    this.maybeStartTour();
   },
 
   // ===== SEEDING =====
@@ -145,6 +149,16 @@ const app = {
     if (!(await db.getSetting('seeded_community_tickets'))) {
       for (const t of (CONTENT.communityTickets || [])) await db.addReport(t);
       await db.setSetting('seeded_community_tickets', true);
+    }
+    // Maintenance history per device
+    if (!(await db.getSetting('seeded_maintenance'))) {
+      for (const m of (CONTENT.maintenanceHistory || [])) await db.addMaintenance(m);
+      await db.setSetting('seeded_maintenance', true);
+    }
+    // Ticket comments demo
+    if (!(await db.getSetting('seeded_comments'))) {
+      for (const c of (CONTENT.ticketComments || [])) await db.addComment(c);
+      await db.setSetting('seeded_comments', true);
     }
   },
 
@@ -219,8 +233,194 @@ const app = {
     if (this._weatherTimer) { clearInterval(this._weatherTimer); this._weatherTimer = null; }
   },
 
+  // ===== LOAD PLANNER (smart usage tips based on forecast) =====
+  renderLoadPlanner() {
+    const host = document.getElementById('load-planner');
+    if (!host) return;
+    const fc = this._weatherForecast;
+    if (!fc || fc.length < 2) { host.classList.add('hidden'); host.innerHTML = ''; return; }
+
+    const today = fc[0], tomorrow = fc[1];
+    const tips = [];
+
+    // Today: when to run heavy loads
+    if (today.solar >= 70) {
+      tips.push({ icon: '☀️', text: this.t('planner.todayHigh') });
+    } else if (today.solar <= 35) {
+      tips.push({ icon: '☁️', text: this.t('planner.todayLow') });
+    }
+
+    // Compare today vs tomorrow
+    if (tomorrow.solar > today.solar + 20) {
+      tips.push({ icon: '📅', text: this.t('planner.tomorrowBetter', { sun: tomorrow.solar }) });
+    } else if (today.solar > tomorrow.solar + 20) {
+      tips.push({ icon: '⚡', text: this.t('planner.doToday', { sun: today.solar }) });
+    }
+
+    // Multi-day rain warning
+    const rainy = fc.slice(0, 3).filter(d => d.condition === 'rain' || d.condition === 'storm').length;
+    if (rainy >= 2) {
+      tips.push({ icon: '🌧️', text: this.t('planner.rainAhead') });
+    }
+
+    // Peak hours guidance
+    tips.push({ icon: '⏰', text: this.t('planner.peakHours') });
+
+    if (!tips.length) { host.classList.add('hidden'); host.innerHTML = ''; return; }
+    host.classList.remove('hidden');
+    host.innerHTML = `
+      <div class="card load-planner-card">
+        <div class="card-head">
+          <h3>${this.t('planner.title')}</h3>
+          <span class="lp-meta">${this.t('planner.basedOn')}</span>
+        </div>
+        <ul class="planner-list">
+          ${tips.map(t => `<li><span class="pl-icon">${t.icon}</span><span>${t.text}</span></li>`).join('')}
+        </ul>
+      </div>`;
+  },
+
+  // ===== ONBOARDING TOUR =====
+  // 5 spotlight tooltips on key Home areas, runs once after first onboarding.
+  _tourStep: 0,
+  TOUR_STEPS: [
+    { target: '#sensor-card',     placement: 'bottom', titleKey: 'tour.sensorT',  textKey: 'tour.sensorD' },
+    { target: '.hero-card',       placement: 'bottom', titleKey: 'tour.heroT',    textKey: 'tour.heroD' },
+    { target: '.weather-card',    placement: 'bottom', titleKey: 'tour.weatherT', textKey: 'tour.weatherD' },
+    { target: '.quick-actions',   placement: 'top',    titleKey: 'tour.actionsT', textKey: 'tour.actionsD' },
+    { target: '.bottom-nav',      placement: 'top',    titleKey: 'tour.navT',     textKey: 'tour.navD' }
+  ],
+
+  async maybeStartTour() {
+    if (await db.getSetting('tour_done')) return;
+    // Give the home view ~600ms to finish rendering before pinning tooltips
+    setTimeout(() => this.startTour(), 700);
+  },
+
+  startTour() {
+    this._tourStep = 0;
+    this.renderTourStep();
+  },
+
+  renderTourStep() {
+    document.getElementById('tour-overlay')?.remove();
+    const step = this.TOUR_STEPS[this._tourStep];
+    if (!step) return this.endTour(true);
+
+    const el = document.querySelector(step.target);
+    if (!el) {                          // target missing → skip step
+      this._tourStep++;
+      return this.renderTourStep();
+    }
+    const rect = el.getBoundingClientRect();
+    const scrollY = window.scrollY;
+
+    const total = this.TOUR_STEPS.length;
+    const isLast = this._tourStep === total - 1;
+    const overlay = document.createElement('div');
+    overlay.id = 'tour-overlay';
+    overlay.innerHTML = `
+      <div class="tour-spot" style="
+        top:${rect.top + scrollY - 6}px;
+        left:${rect.left - 6}px;
+        width:${rect.width + 12}px;
+        height:${rect.height + 12}px;"></div>
+      <div class="tour-tip ${step.placement}" style="
+        top:${(step.placement === 'bottom' ? rect.bottom + scrollY + 14 : rect.top + scrollY - 12)}px;
+        left:${Math.max(12, Math.min(window.innerWidth - 312, rect.left + rect.width/2 - 150))}px;">
+        <div class="tour-step">${this._tourStep + 1} / ${total}</div>
+        <div class="tour-title">${this.t(step.titleKey)}</div>
+        <div class="tour-text">${this.t(step.textKey)}</div>
+        <div class="tour-actions">
+          <button class="tour-skip" onclick="app.endTour(false)">${this.t('tour.skip')}</button>
+          <button class="tour-next" onclick="app.tourNext()">${isLast ? this.t('tour.done') : this.t('tour.next')}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    // Scroll target into view if needed
+    if (rect.top < 60 || rect.bottom > window.innerHeight - 100) {
+      window.scrollTo({ top: rect.top + scrollY - 100, behavior: 'smooth' });
+      setTimeout(() => this.renderTourStep(), 350); // re-position after scroll
+      overlay.style.opacity = '0.0';
+    }
+  },
+
+  tourNext() {
+    this._tourStep++;
+    if (this._tourStep >= this.TOUR_STEPS.length) return this.endTour(true);
+    this.renderTourStep();
+  },
+
+  async endTour(completed) {
+    document.getElementById('tour-overlay')?.remove();
+    await db.setSetting('tour_done', true);
+    if (completed) this.showToast(this.t('tour.thanks'));
+  },
+
+  // ===== MONSOON MODE =====
+  // Pre-monsoon (May): show "prepare" banner
+  // Monsoon (June-Sep): show "active" banner with safety reminders
+  monsoonPhase() {
+    const force = localStorage.getItem('force_monsoon');  // demo override
+    if (force === 'pre' || force === 'active' || force === 'off') return force === 'off' ? null : force;
+    const m = new Date().getMonth(); // 0=Jan
+    if (m === 4) return 'pre';                   // May
+    if (m >= 5 && m <= 8) return 'active';       // Jun-Sep
+    return null;
+  },
+
+  renderMonsoonBanner() {
+    const host = document.getElementById('monsoon-banner');
+    if (!host) return;
+    const phase = this.monsoonPhase();
+    if (!phase) { host.classList.add('hidden'); host.innerHTML = ''; return; }
+    host.classList.remove('hidden');
+    const title = phase === 'pre'    ? this.t('monsoon.preTitle')    : this.t('monsoon.activeTitle');
+    const text  = phase === 'pre'    ? this.t('monsoon.preText')     : this.t('monsoon.activeText');
+    host.innerHTML = `
+      <div class="monsoon-banner ${phase}">
+        <div class="mb-icon">🌧️</div>
+        <div class="mb-body">
+          <div class="mb-title">${title}</div>
+          <div class="mb-text">${text}</div>
+          <button class="link-btn" onclick="app.showMonsoonChecklist()">${this.t('monsoon.openChecklist')} →</button>
+        </div>
+      </div>`;
+  },
+
+  showMonsoonChecklist() {
+    this.openArticle('art_monsoon');
+  },
+
+  // ===== SKELETONS =====
+  skeletonReports(n = 2) {
+    return Array.from({ length: n }, () => `
+      <div class="sk-card sk-row">
+        <span class="skeleton sk-block" style="width:40px;height:40px;border-radius:10px"></span>
+        <div class="sk-col">
+          <span class="skeleton sk-line medium"></span>
+          <span class="skeleton sk-line short" style="margin-bottom:0"></span>
+        </div>
+      </div>`).join('');
+  },
+  skeletonAppt() {
+    return `<div class="sk-card sk-row">
+      <span class="skeleton" style="width:56px;height:56px;border-radius:10px"></span>
+      <div class="sk-col">
+        <span class="skeleton sk-line medium"></span>
+        <span class="skeleton sk-line short" style="margin-bottom:0"></span>
+      </div>
+    </div>`;
+  },
+
   // ===== HOME =====
   async loadHome() {
+    // Paint skeletons immediately so the page is never blank
+    const recentEl = document.getElementById('recent-reports');
+    const apptEl   = document.getElementById('next-appointment');
+    if (recentEl && !recentEl.children.length) recentEl.innerHTML = this.skeletonReports(2);
+    if (apptEl   && !apptEl.children.length)   apptEl.innerHTML   = this.skeletonAppt();
+
     const reports = await db.getReports();
     const alerts  = await db.getAlerts();
     const open = reports.filter(r => r.status !== 'resolved');
@@ -231,6 +431,7 @@ const app = {
 
     this._home = { reports, open, devices, logs };
     this.updateHealthSummary();
+    this.renderMonsoonBanner();
 
     // weather — show cached/mock immediately, then refresh live in background
     this.renderWeather();
@@ -797,12 +998,66 @@ const app = {
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-head"><h3>${this.t('tic.discussion')}</h3></div>
+        <div id="ticket-comments" class="comment-list"></div>
+        <div class="comment-composer">
+          <textarea id="ticket-comment-input" placeholder="${this.t('tic.commentPlaceholder')}" rows="2"></textarea>
+          <button class="primary-btn" onclick="app.addTicketComment('${r.id}')">${this.t('tic.send')}</button>
+        </div>
+      </div>
+
       ${!this.isStaff() ? `<div class="card">
         <div class="card-head"><h3>${this.t('tic.recommendedTech')}</h3></div>
         ${this.renderTechs(techs.slice(0,2))}
       </div>` : ''}
     `;
     this.showView('ticket');
+    this.renderTicketComments(r.id);
+  },
+
+  async renderTicketComments(ticketId) {
+    const host = document.getElementById('ticket-comments');
+    if (!host) return;
+    const comments = await db.getCommentsFor(ticketId);
+    if (!comments.length) {
+      host.innerHTML = `<div class="empty-state"><p>${this.t('tic.noComments')}</p></div>`;
+      return;
+    }
+    host.innerHTML = comments.map(c => {
+      const isStaff = c.author.role === 'technician' || c.author.role === 'admin';
+      return `<div class="comment ${isStaff ? 'staff' : 'user'}">
+        <div class="comment-avatar">${this.escapeHtml(c.author.avatar || (c.author.name || '?').charAt(0))}</div>
+        <div class="comment-body">
+          <div class="comment-head">
+            <strong>${this.escapeHtml(c.author.name)}</strong>
+            ${isStaff ? `<span class="comment-role">🔧 ${this.t('role.technician')}</span>` : ''}
+            <span class="comment-time">${this.timeAgo(c.createdAt)}</span>
+          </div>
+          <div class="comment-text">${this.escapeHtml(this.L(c.body))}</div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  async addTicketComment(ticketId) {
+    const input = document.getElementById('ticket-comment-input');
+    const text = (input?.value || '').trim();
+    if (!text) return;
+    const role = this.currentRole();
+    const community = await db.getSetting('community_name') || this.t('com.you');
+    const techs = await db.getTechnicians();
+    const me = role === 'technician' ? techs[0] : null;
+    const author = me
+      ? { name: me.name, role: 'technician', avatar: me.name.charAt(0) }
+      : { name: community + ' (' + this.t('com.you') + ')', role: 'user', avatar: community.charAt(0) };
+    await db.addComment({
+      id: 'cm_' + Date.now(),
+      ticketId, author, body: text, createdAt: Date.now()
+    });
+    input.value = '';
+    this.renderTicketComments(ticketId);
+    if (navigator.vibrate) navigator.vibrate(20);
   },
 
   // Staff: assign current ticket to "me" and put it into progress
@@ -939,51 +1194,83 @@ const app = {
     return icons[type] || '';
   },
 
-  openDevice(id) {
-    db.getDevice(id).then(d => {
-      if (!d) return;
-      const yearsOld = ((Date.now() - d.installedAt) / (1000*60*60*24*365)).toFixed(1);
-      const warrantyEnd = new Date(d.installedAt + d.warrantyYears * 365 * 24 * 60 * 60 * 1000);
-      const warrantyValid = warrantyEnd > new Date();
-      document.getElementById('device-title').textContent = d.name;
-      const statusLabel = d.status === 'good' ? this.t('dev.ok') : (d.status === 'warning' ? this.t('dev.attention') : this.t('dev.fault'));
-      document.getElementById('device-detail').innerHTML = `
-        <div class="device-hero">
-          ${charts.ring({ value: d.health, size: 100, stroke: 10, color: d.status === 'good' ? '#1a6b3c' : '#FB8C00', label: this.t('dev.health') })}
-          <h3>${this.escapeHtml(d.name)}</h3>
-          <div class="dh-serial">SN: ${this.escapeHtml(d.serial)}</div>
-          ${d.note ? `<div style="margin-top:8px;color:var(--orange);font-size:13px">⚠ ${this.escapeHtml(d.note)}</div>` : ''}
-          <div class="spec-list">
-            <div class="spec-item"><div class="sl-lbl">${this.t('dev.installed')}</div><div class="sl-val">${this.t('dev.yearsAgo', { n: yearsOld })}</div></div>
-            <div class="spec-item"><div class="sl-lbl">${this.t('dev.type')}</div><div class="sl-val">${d.type}</div></div>
-            <div class="spec-item"><div class="sl-lbl">${this.t('dev.warranty')}</div><div class="sl-val">${warrantyValid ? this.t('dev.warrUntil', { y: warrantyEnd.getFullYear() }) : this.t('dev.warrExpired')}</div></div>
-            <div class="spec-item"><div class="sl-lbl">${this.t('dev.status')}</div><div class="sl-val">${statusLabel}</div></div>
-            ${d.cycles ? `<div class="spec-item"><div class="sl-lbl">${this.t('dev.cycles')}</div><div class="sl-val">${d.cycles}</div></div>` : ''}
-          </div>
-        </div>
+  async openDevice(id) {
+    const d = await db.getDevice(id);
+    if (!d) return;
+    const yearsOld = ((Date.now() - d.installedAt) / (1000*60*60*24*365)).toFixed(1);
+    const warrantyEnd = new Date(d.installedAt + d.warrantyYears * 365 * 24 * 60 * 60 * 1000);
+    const warrantyValid = warrantyEnd > new Date();
+    const statusLabel = d.status === 'good' ? this.t('dev.ok') : (d.status === 'warning' ? this.t('dev.attention') : this.t('dev.fault'));
+    const techs = await db.getTechnicians();
+    const allMaint = await db.getMaintenance();
+    const history = allMaint.filter(m => m.deviceId === id).sort((a, b) => b.date - a.date);
+    const loc = this.lang === 'en' ? 'en-US' : 'de-DE';
+    const kindIcon = { clean: '🧽', inspect: '🔍', service: '🔧', repair: '🛠️', replace: '🔄' };
 
-        <div class="card">
-          <div class="card-head"><h3>${this.t('dev.actions')}</h3></div>
-          <button class="primary-btn" style="margin-bottom:8px" onclick="app.showView('report')">${this.t('dev.reportProblem')}</button>
-          <button class="ghost-btn" onclick="app.scheduleAppointment()">${this.t('dev.planMaint')}</button>
+    const historyHtml = history.length ? `
+      <div class="card">
+        <div class="card-head"><h3>${this.t('dev.serviceHistory')}</h3></div>
+        <div class="service-timeline">
+          ${history.map(m => {
+            const tech = techs.find(t => t.id === m.techId);
+            const dateStr = new Date(m.date).toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' });
+            return `<div class="st-item">
+              <div class="st-dot">${kindIcon[m.kind] || '•'}</div>
+              <div class="st-body">
+                <div class="st-head">
+                  <span class="st-kind">${this.t('dev.kind.' + m.kind)}</span>
+                  <span class="st-date">${dateStr}</span>
+                </div>
+                <div class="st-meta">${tech ? this.escapeHtml(tech.name) : this.t('dev.selfService')}</div>
+                ${this.L(m.notes) ? `<div class="st-note">${this.escapeHtml(this.L(m.notes))}</div>` : ''}
+              </div>
+            </div>`;
+          }).join('')}
         </div>
+      </div>` : `
+      <div class="card">
+        <div class="card-head"><h3>${this.t('dev.serviceHistory')}</h3></div>
+        <div class="empty-state"><p>${this.t('dev.noHistory')}</p></div>
+      </div>`;
 
-        ${d.type === 'battery' ? `
-        <div class="card">
-          <div class="card-head"><h3>${this.t('dev.battTrend')}</h3></div>
-          <div id="batt-trend"></div>
-        </div>` : ''}
-      `;
-      if (d.type === 'battery') {
-        db.getEnergyLogs().then(logs => {
-          const sorted = logs.sort((a,b) => a.date.localeCompare(b.date));
-          document.getElementById('batt-trend').innerHTML = charts.line({
-            data: sorted.map(l => l.battery), height: 110, color: '#1a6b3c'
-          });
-        });
-      }
-      this.showView('device');
-    });
+    document.getElementById('device-title').textContent = d.name;
+    document.getElementById('device-detail').innerHTML = `
+      <div class="device-hero">
+        ${charts.ring({ value: d.health, size: 100, stroke: 10, color: d.status === 'good' ? '#1a6b3c' : '#FB8C00', label: this.t('dev.health') })}
+        <h3>${this.escapeHtml(d.name)}</h3>
+        <div class="dh-serial">SN: ${this.escapeHtml(d.serial)}</div>
+        ${d.note ? `<div style="margin-top:8px;color:var(--orange);font-size:13px">⚠ ${this.escapeHtml(d.note)}</div>` : ''}
+        <div class="spec-list">
+          <div class="spec-item"><div class="sl-lbl">${this.t('dev.installed')}</div><div class="sl-val">${this.t('dev.yearsAgo', { n: yearsOld })}</div></div>
+          <div class="spec-item"><div class="sl-lbl">${this.t('dev.type')}</div><div class="sl-val">${d.type}</div></div>
+          <div class="spec-item"><div class="sl-lbl">${this.t('dev.warranty')}</div><div class="sl-val">${warrantyValid ? this.t('dev.warrUntil', { y: warrantyEnd.getFullYear() }) : this.t('dev.warrExpired')}</div></div>
+          <div class="spec-item"><div class="sl-lbl">${this.t('dev.status')}</div><div class="sl-val">${statusLabel}</div></div>
+          ${d.cycles ? `<div class="spec-item"><div class="sl-lbl">${this.t('dev.cycles')}</div><div class="sl-val">${d.cycles}</div></div>` : ''}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>${this.t('dev.actions')}</h3></div>
+        <button class="primary-btn" style="margin-bottom:8px" onclick="app.showView('report')">${this.t('dev.reportProblem')}</button>
+        <button class="ghost-btn" onclick="app.scheduleAppointment()">${this.t('dev.planMaint')}</button>
+      </div>
+
+      ${historyHtml}
+
+      ${d.type === 'battery' ? `
+      <div class="card">
+        <div class="card-head"><h3>${this.t('dev.battTrend')}</h3></div>
+        <div id="batt-trend"></div>
+      </div>` : ''}
+    `;
+    if (d.type === 'battery') {
+      const logs = await db.getEnergyLogs();
+      const sorted = logs.sort((a,b) => a.date.localeCompare(b.date));
+      document.getElementById('batt-trend').innerHTML = charts.line({
+        data: sorted.map(l => l.battery), height: 110, color: '#1a6b3c'
+      });
+    }
+    this.showView('device');
   },
 
   // ===== ANALYTICS =====
@@ -1006,6 +1293,111 @@ const app = {
       height: 170
     });
     this.renderImpact('impact-grid2', logs);
+    await this.renderCommunityStats();
+  },
+
+  // Aggregate community-level numbers from local data
+  // (in a real backend these would come from the server, here we scale up the demo)
+  async renderCommunityStats() {
+    const host = document.getElementById('community-stats');
+    if (!host) return;
+    const reports = await db.getReports();
+    const techs   = await db.getTechnicians();
+    const posts   = await db.getPosts();
+    const comments= await db.getComments();
+    const village = (await db.getSetting('community_name')) || 'Khandala';
+
+    // Assumption: demo logs are for ~1 household; village = ~40 households
+    const HH = 40;
+    const logs = await db.getEnergyLogs();
+    const totalProd = logs.reduce((s,l) => s + l.produced, 0);
+    const monthKwh  = Math.round(totalProd * (30/14) * HH);
+    const moneySaved= Math.round(monthKwh * 8.5);
+    const co2       = (monthKwh * 0.82).toFixed(0);
+
+    // Ticket KPIs
+    const resolved = reports.filter(r => r.status === 'resolved');
+    const open     = reports.filter(r => r.status !== 'resolved').length;
+
+    // Avg resolution time (only resolved tickets with a community source, fallback 4h)
+    let avgResHrs = 4.2;
+    if (resolved.length) {
+      const diffs = resolved.map(r => {
+        // demo: resolved tickets take 2-8 hours
+        const seed = parseInt((r.id || '').slice(-4), 36) || 5;
+        return 2 + (seed % 6);
+      });
+      avgResHrs = (diffs.reduce((a,b) => a+b, 0) / diffs.length).toFixed(1);
+    }
+
+    // Top helpers: technicians ranked by ticket count (assigned + jobs field)
+    const helperCounts = {};
+    for (const r of reports) {
+      if (r.assignedTo) helperCounts[r.assignedTo] = (helperCounts[r.assignedTo] || 0) + 1;
+    }
+    const topHelpers = techs
+      .map(t => ({ ...t, score: (helperCounts[t.id] || 0) * 3 + Math.min(20, t.jobs || 0) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+
+    host.innerHTML = `
+      <div class="card cs-hero">
+        <div class="cs-village">${this.escapeHtml(village)}</div>
+        <div class="cs-sub">${this.t('cs.thisMonth')}</div>
+        <div class="cs-grid">
+          <div class="cs-tile">
+            <div class="cs-val">${monthKwh.toLocaleString('de-DE')}</div>
+            <div class="cs-lbl">kWh ${this.t('cs.produced')}</div>
+          </div>
+          <div class="cs-tile">
+            <div class="cs-val">₹${moneySaved.toLocaleString('de-DE')}</div>
+            <div class="cs-lbl">${this.t('cs.saved')}</div>
+          </div>
+          <div class="cs-tile">
+            <div class="cs-val">${co2} kg</div>
+            <div class="cs-lbl">${this.t('cs.co2')}</div>
+          </div>
+          <div class="cs-tile">
+            <div class="cs-val">${HH}</div>
+            <div class="cs-lbl">${this.t('cs.households')}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>${this.t('cs.supportKpi')}</h3></div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="kpi-val">${resolved.length}</div><div class="kpi-lbl">${this.t('cs.resolved')}</div></div>
+          <div class="kpi"><div class="kpi-val">${open}</div><div class="kpi-lbl">${this.t('cs.open')}</div></div>
+          <div class="kpi"><div class="kpi-val">${avgResHrs}h</div><div class="kpi-lbl">${this.t('cs.avgTime')}</div></div>
+          <div class="kpi"><div class="kpi-val">${comments.length}</div><div class="kpi-lbl">${this.t('cs.messages')}</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>${this.t('cs.topHelpers')}</h3></div>
+        <ol class="helper-list">
+          ${topHelpers.map((h, i) => `
+            <li>
+              <span class="helper-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span>
+              <div class="helper-info">
+                <div class="helper-name">${this.escapeHtml(h.name)}</div>
+                <div class="helper-meta">★ ${h.rating || '–'} · ${h.jobs || 0} ${this.t('cs.jobs')}</div>
+              </div>
+              <span class="helper-score">${h.score} ${this.t('cs.points')}</span>
+            </li>`).join('')}
+        </ol>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>${this.t('cs.engagement')}</h3></div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="kpi-val">${posts.length}</div><div class="kpi-lbl">${this.t('cs.posts')}</div></div>
+          <div class="kpi"><div class="kpi-val">${techs.length}</div><div class="kpi-lbl">${this.t('cs.activeTechs')}</div></div>
+          <div class="kpi"><div class="kpi-val">${Math.round(monthKwh / HH)}</div><div class="kpi-lbl">${this.t('cs.kwhPerHh')}</div></div>
+        </div>
+      </div>
+    `;
   },
 
   renderImpact(targetId, logs) {
@@ -1341,6 +1733,8 @@ const app = {
     if (owmInput) owmInput.value = localStorage.getItem('owm_api_key') || '';
     const claudeInput = document.getElementById('setting-claude-key');
     if (claudeInput) claudeInput.value = localStorage.getItem('claude_api_key') || '';
+    const monsoonSel = document.getElementById('set-monsoon');
+    if (monsoonSel) monsoonSel.value = localStorage.getItem('force_monsoon') || 'off';
   },
 
   selectRole(btn) {
@@ -1425,6 +1819,7 @@ const app = {
 
     // Smart cross-check whenever weather changes
     this.checkSmartHints();
+    this.renderLoadPlanner();
 
     const meta = document.getElementById('weather-meta');
     if (meta) {
@@ -1491,6 +1886,12 @@ const app = {
     await db.setSetting('role', this.selectedRole);
     await db.setSetting('contrast', contrast);
     await db.setSetting('large', large);
+
+    const monsoon = document.getElementById('set-monsoon');
+    if (monsoon) {
+      if (monsoon.value === 'off') localStorage.removeItem('force_monsoon');
+      else localStorage.setItem('force_monsoon', monsoon.value);
+    }
 
     const owmKey = document.getElementById('setting-owm-key').value.trim();
     const claudeKey = document.getElementById('setting-claude-key').value.trim();

@@ -14,7 +14,8 @@ const STORES = [
   { name: 'appointments', keyPath: 'id', indexes: [['scheduledFor','scheduledFor']] },
   { name: 'posts',        keyPath: 'id', indexes: [['createdAt','createdAt']] },
   { name: 'progress',     keyPath: 'lessonId' },
-  { name: 'maintenance',  keyPath: 'id', indexes: [['deviceId','deviceId'],['date','date']] }
+  { name: 'maintenance',  keyPath: 'id', indexes: [['deviceId','deviceId'],['date','date']] },
+  { name: 'comments',     keyPath: 'id', indexes: [['ticketId','ticketId'],['createdAt','createdAt']] }
 ];
 
 const db = {
@@ -123,5 +124,13 @@ const db = {
 
   // ---- Maintenance history
   addMaintenance:  (m) => db._tx('maintenance', 'readwrite', s => s.put(m)),
-  getMaintenance:  ()  => db._tx('maintenance', 'readonly',  s => s.getAll())
+  getMaintenance:  ()  => db._tx('maintenance', 'readonly',  s => s.getAll()),
+
+  // ---- Ticket comments
+  addComment:  (c) => db._tx('comments', 'readwrite', s => s.put(c)),
+  getComments: ()  => db._tx('comments', 'readonly',  s => s.getAll()),
+  async getCommentsFor(ticketId) {
+    const all = await this.getComments();
+    return all.filter(c => c.ticketId === ticketId).sort((a, b) => a.createdAt - b.createdAt);
+  }
 };

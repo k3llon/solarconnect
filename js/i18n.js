@@ -176,6 +176,78 @@ const I18N = {
   'his.title':       { de: 'Meldungsverlauf', en: 'Report history', hi: 'रिपोर्ट इतिहास', ta: 'அறிக்கை வரலாறு', bn: 'রিপোর্ট ইতিহাস', te: 'నివేదిక చరిత్ర' },
   'his.empty':       { de: 'Noch keine Meldungen.', en: 'No reports yet.', hi: 'अभी तक कोई रिपोर्ट नहीं।', ta: 'அறிக்கைகள் இல்லை.', bn: 'এখনও কোনো রিপোর্ট নেই।', te: 'ఇంకా నివేదికలు లేవు.' },
 
+  // ===== TICKET COMMENTS =====
+  'tic.discussion':       { de: 'Konversation', en: 'Discussion', hi: 'चर्चा', ta: 'விவாதம்', bn: 'আলোচনা', te: 'చర్చ' },
+  'tic.commentPlaceholder':{ de: 'Nachricht schreiben…', en: 'Write a message…', hi: 'संदेश लिखें…', ta: 'செய்தி எழுது…', bn: 'বার্তা লিখুন…', te: 'సందేశం రాయండి…' },
+  'tic.send':             { de: 'Senden', en: 'Send', hi: 'भेजें', ta: 'அனுப்பு', bn: 'পাঠান', te: 'పంపండి' },
+  'tic.noComments':       { de: 'Noch keine Nachrichten. Sei der erste!', en: 'No messages yet. Be the first!', hi: 'अभी कोई संदेश नहीं।', ta: 'இன்னும் செய்திகள் இல்லை.', bn: 'এখনও কোনো বার্তা নেই।', te: 'ఇంకా సందేశాలు లేవు.' },
+
+  // ===== SERVICE HISTORY =====
+  'dev.serviceHistory':   { de: 'Service-Historie', en: 'Service history', hi: 'सेवा इतिहास', ta: 'சேவை வரலாறு', bn: 'সার্ভিস ইতিহাস', te: 'సేవ చరిత్ర' },
+  'dev.noHistory':        { de: 'Noch keine Wartung dokumentiert.', en: 'No service records yet.', hi: 'अभी कोई रिकॉर्ड नहीं।', ta: 'பதிவுகள் இல்லை.', bn: 'কোনো রেকর্ড নেই।', te: 'రికార్డులు లేవు.' },
+  'dev.selfService':      { de: 'Eigenleistung', en: 'Self-service', hi: 'स्वयं', ta: 'சுயமாக', bn: 'নিজে', te: 'స్వయంగా' },
+  'dev.kind.clean':       { de: 'Reinigung', en: 'Cleaning', hi: 'सफाई', ta: 'சுத்தம்', bn: 'পরিষ্কার', te: 'శుభ్రపరచడం' },
+  'dev.kind.inspect':     { de: 'Inspektion', en: 'Inspection', hi: 'निरीक्षण', ta: 'பரிசோதனை', bn: 'পরিদর্শন', te: 'తనిఖీ' },
+  'dev.kind.service':     { de: 'Wartung', en: 'Service', hi: 'सेवा', ta: 'சேவை', bn: 'সার্ভিস', te: 'సేవ' },
+  'dev.kind.repair':      { de: 'Reparatur', en: 'Repair', hi: 'मरम्मत', ta: 'பழுது', bn: 'মেরামত', te: 'మరమ్మత్తు' },
+  'dev.kind.replace':     { de: 'Austausch', en: 'Replacement', hi: 'प्रतिस्थापन', ta: 'மாற்றம்', bn: 'প্রতিস্থাপন', te: 'భర్తీ' },
+
+  // ===== LOAD PLANNER =====
+  'planner.title':        { de: '⚡ Lastplaner', en: '⚡ Load planner', hi: '⚡ लोड प्लानर', ta: '⚡ சுமை திட்டம்', bn: '⚡ লোড প্ল্যানার', te: '⚡ లోడ్ ప్లానర్' },
+  'planner.basedOn':      { de: 'basiert auf Wetter', en: 'based on weather', hi: 'मौसम के आधार पर', ta: 'வானிலை அடிப்படையில்', bn: 'আবহাওয়ার ভিত্তিতে', te: 'వాతావరణం ఆధారంగా' },
+  'planner.todayHigh':    { de: 'Heute viel Sonne — idealer Tag für Pumpe, Wäsche und energieintensive Geräte.', en: 'Lots of sun today — ideal for pump, laundry and energy-heavy devices.', hi: 'आज खूब धूप — पंप और कपड़े धोने के लिए अच्छा दिन।', ta: 'இன்று நிறைய சூரியன் — பம்ப், துணி துவைப்பு.', bn: 'আজ প্রচুর রোদ — পাম্প ও কাপড় ধোয়ার দিন।', te: 'ఈరోజు ఎక్కువ ఎండ — పంప్, లాండ్రీకి అనుకూలం.' },
+  'planner.todayLow':     { de: 'Heute wenig Sonne — verschiebe energieintensive Geräte wenn möglich.', en: 'Low sun today — defer heavy loads if possible.', hi: 'आज कम धूप — भारी काम बाद के लिए।', ta: 'இன்று குறைந்த சூரியன் — பணிகளை தாமதப்படுத்து.', bn: 'আজ কম রোদ — ভারী কাজ পরে।', te: 'ఈరోజు తక్కువ ఎండ — భారీ పనులు తరువాత.' },
+  'planner.tomorrowBetter':{ de: 'Morgen deutlich besser ({sun}% Sonne) — Wäsche/Pumpe besser auf morgen schieben.', en: 'Tomorrow much better ({sun}% sun) — postpone laundry/pump.', hi: 'कल बेहतर ({sun}% धूप) — कल कीजिए।', ta: 'நாளை சிறப்பாக ({sun}% சூரியன்).', bn: 'কাল ভালো ({sun}% রোদ) — কাল করুন।', te: 'రేపు మంచిది ({sun}% ఎండ) — రేపు చేయండి.' },
+  'planner.doToday':      { de: 'Morgen wird schlechter — energieintensive Aufgaben heute erledigen ({sun}% Sonne).', en: 'Tomorrow worse — do heavy tasks today ({sun}% sun).', hi: 'कल खराब — आज ही करें।', ta: 'நாளை மோசம் — இன்றே செய்.', bn: 'কাল খারাপ — আজ করুন।', te: 'రేపు చెడ్డది — ఈరోజే చేయండి.' },
+  'planner.rainAhead':    { de: 'Mehrere Regentage in Folge — Batterie schonen, Reserve aufbauen.', en: 'Several rainy days ahead — conserve battery, build reserve.', hi: 'कई बारिश के दिन — बैटरी बचाएँ।', ta: 'பல மழை நாட்கள் — பேட்டரி காப்பாற்று.', bn: 'কয়েকদিন বৃষ্টি — ব্যাটারি বাঁচান।', te: 'వర్ష రోజులు — బ్యాటరీ ఆదా.' },
+  'planner.peakHours':    { de: 'Hauptproduktion: 10:00–15:00 — beste Zeit für Pumpe und energieintensive Geräte.', en: 'Peak production: 10am–3pm — best time for pump & heavy loads.', hi: 'मुख्य उत्पादन: 10–3 बजे।', ta: 'உச்ச உற்பத்தி: 10–3 மணி.', bn: 'পিক উৎপাদন: 10–3টা।', te: 'పీక్ ఉత్పత్తి: 10–3.' },
+
+  // ===== MONSOON =====
+  'monsoon.preTitle':     { de: 'Monsun naht — Zeit für die Vorbereitung', en: 'Monsoon approaching — prep time', hi: 'मानसून आ रहा — तैयारी का समय', ta: 'பருவமழை வருகிறது — தயாரிப்பு', bn: 'বর্ষা আসছে — প্রস্তুতি', te: 'వర్ష ఋతువు వస్తోంది — సన్నాహాలు' },
+  'monsoon.preText':      { de: 'Halterungen prüfen, Erdung kontrollieren, Inverter wasserdicht abdecken.', en: 'Check mounts, grounding, waterproof the inverter.', hi: 'माउंट, ग्राउंडिंग जाँचें।', ta: 'பொருத்துதல்கள் சரிபார்.', bn: 'মাউন্ট চেক।', te: 'మౌంట్లు తనిఖీ.' },
+  'monsoon.activeTitle':  { de: 'Monsun aktiv — Sicherheit zuerst', en: 'Monsoon active — safety first', hi: 'मानसून सक्रिय — सुरक्षा प्राथमिक', ta: 'பருவமழை — பாதுகாப்பு', bn: 'বর্ষা — নিরাপত্তা', te: 'వర్ష ఋతువు — భద్రత' },
+  'monsoon.activeText':   { de: 'Bei Sturm Hauptschalter aus. Niemals auf nasse Panels steigen.', en: 'Switch off in storms. Never climb wet panels.', hi: 'तूफान में बंद करें।', ta: 'புயலில் ஆஃப்.', bn: 'ঝড়ে বন্ধ।', te: 'తుఫాన్‌లో ఆఫ్.' },
+  'monsoon.openChecklist':{ de: 'Checkliste öffnen', en: 'Open checklist', hi: 'चेकलिस्ट खोलें', ta: 'பட்டியல் திற', bn: 'চেকলিস্ট খুলুন', te: 'చెక్‌లిస్ట్ తెరవండి' },
+
+  // ===== TOUR =====
+  'tour.next':            { de: 'Weiter', en: 'Next', hi: 'आगे', ta: 'அடுத்து', bn: 'পরবর্তী', te: 'తదుపరి' },
+  'tour.done':            { de: 'Fertig', en: 'Done', hi: 'पूरा', ta: 'முடிந்தது', bn: 'হয়েছে', te: 'పూర్తి' },
+  'tour.skip':            { de: 'Überspringen', en: 'Skip', hi: 'छोड़ें', ta: 'தவிர்', bn: 'বাদ দিন', te: 'దాటవేయండి' },
+  'tour.thanks':          { de: 'Viel Erfolg!', en: 'Have fun!', hi: 'शुभकामनाएँ!', ta: 'வாழ்த்துகள்!', bn: 'শুভকামনা!', te: 'శుభాకాంక్షలు!' },
+  'tour.sensorT':         { de: 'Live-Solarpanel', en: 'Live solar panel', hi: 'लाइव पैनल', ta: 'நேரடி பேனல்', bn: 'লাইভ প্যানেল', te: 'లైవ్ ప్యానెల్' },
+  'tour.sensorD':         { de: 'Dein echter Sensor zeigt die aktuelle Energieproduktion in Watt.', en: 'Your real sensor shows live production in watts.', hi: 'आपका असली सेंसर वर्तमान उत्पादन दिखाता है।', ta: 'நிஜ சென்சர் நேரடி உற்பத்தி.', bn: 'বাস্তব সেন্সর লাইভ উৎপাদন।', te: 'నిజమైన సెన్సర్ లైవ్ ఉత్పత్తి.' },
+  'tour.heroT':            { de: 'System-Übersicht', en: 'System overview', hi: 'सिस्टम सारांश', ta: 'அமைப்பு கண்ணோட்டம்', bn: 'সিস্টেম সারসংক্ষেপ', te: 'వ్యవస్థ సారాంశం' },
+  'tour.heroD':            { de: 'Gesamtzustand auf einen Blick — kombiniert Geräte, Tickets und Live-Sensor.', en: 'Overall health at a glance — combines devices, tickets and live sensor.', hi: 'समग्र स्वास्थ्य एक नज़र में।', ta: 'மொத்த நிலை.', bn: 'সামগ্রিক অবস্থা।', te: 'మొత్తం స్థితి.' },
+  'tour.weatherT':         { de: 'Wetter & Vorhersage', en: 'Weather & forecast', hi: 'मौसम और पूर्वानुमान', ta: 'வானிலை & கணிப்பு', bn: 'আবহাওয়া ও পূর্বাভাস', te: 'వాతావరణం & సూచన' },
+  'tour.weatherD':         { de: '5-Tage-Prognose mit Solar-Potential. Die App empfiehlt, wann du Geräte nutzen sollst.', en: '5-day forecast with solar potential. The app suggests when to run devices.', hi: '5-दिन पूर्वानुमान।', ta: '5-நாள் கணிப்பு.', bn: '5-দিন পূর্বাভাস।', te: '5-రోజుల సూచన.' },
+  'tour.actionsT':         { de: 'Schnellaktionen', en: 'Quick actions', hi: 'त्वरित कार्रवाई', ta: 'விரைவு செயல்கள்', bn: 'দ্রুত ক্রিয়া', te: 'శీఘ్ర చర్యలు' },
+  'tour.actionsD':         { de: 'Im Notfall ein Tipp — Notfall, Selbsthilfe, melden oder direkt Techniker rufen.', en: 'One tap in emergencies — alarm, self-help, report, or call a technician.', hi: 'एक टैप।', ta: 'ஒரே தட்டு.', bn: 'এক ট্যাপ।', te: 'ఒక్క ట్యాప్.' },
+  'tour.navT':             { de: 'Navigation', en: 'Navigation', hi: 'नेविगेशन', ta: 'வழிசெலுத்தல்', bn: 'নেভিগেশন', te: 'నావిగేషన్' },
+  'tour.navD':             { de: 'Start, Selbsthilfe, Support, System und Mehr — alles immer einen Tipp entfernt.', en: 'Home, self-help, support, system, more — always one tap away.', hi: 'सब एक टैप दूर।', ta: 'அனைத்தும் ஒரே தட்டு.', bn: 'সব এক ট্যাপ।', te: 'అన్నీ ఒక్క ట్యాప్.' },
+
+  // ===== COMMUNITY STATS =====
+  'cs.thisMonth':         { de: 'Diesen Monat', en: 'This month', hi: 'इस महीने', ta: 'இந்த மாதம்', bn: 'এই মাসে', te: 'ఈ నెల' },
+  'cs.produced':          { de: 'erzeugt', en: 'produced', hi: 'उत्पादित', ta: 'உற்பத்தி', bn: 'উৎপাদিত', te: 'ఉత్పత్తి' },
+  'cs.saved':             { de: 'gespart', en: 'saved', hi: 'बचाया', ta: 'சேமிப்பு', bn: 'সাশ্রয়', te: 'ఆదా' },
+  'cs.co2':               { de: 'CO₂ vermieden', en: 'CO₂ avoided', hi: 'CO₂ बचा', ta: 'CO₂ தவிர்ப்பு', bn: 'CO₂ এড়ানো', te: 'CO₂ నివారణ' },
+  'cs.households':        { de: 'Haushalte', en: 'Households', hi: 'घर', ta: 'வீடுகள்', bn: 'বাড়ি', te: 'గృహాలు' },
+  'cs.supportKpi':        { de: 'Support-Kennzahlen', en: 'Support metrics', hi: 'सहायता आँकड़े', ta: 'ஆதரவு', bn: 'সাপোর্ট মেট্রিক্স', te: 'మద్దతు మెట్రిక్స్' },
+  'cs.resolved':          { de: 'Gelöst', en: 'Resolved', hi: 'हल', ta: 'தீர்க்கப்பட்டது', bn: 'সমাধান', te: 'పరిష్కరించబడింది' },
+  'cs.open':              { de: 'Offen', en: 'Open', hi: 'खुला', ta: 'திறந்த', bn: 'খোলা', te: 'తెరిచిన' },
+  'cs.avgTime':           { de: 'Ø Lösung', en: 'Avg. time', hi: 'औसत समय', ta: 'சராசரி நேரம்', bn: 'গড় সময়', te: 'సగటు సమయం' },
+  'cs.messages':          { de: 'Nachrichten', en: 'Messages', hi: 'संदेश', ta: 'செய்திகள்', bn: 'বার্তা', te: 'సందేశాలు' },
+  'cs.topHelpers':        { de: '🏆 Top-Helfer:innen', en: '🏆 Top helpers', hi: '🏆 शीर्ष सहायक', ta: '🏆 முதன்மை உதவியாளர்', bn: '🏆 শীর্ষ সহায়ক', te: '🏆 టాప్ సహాయకులు' },
+  'cs.jobs':              { de: 'Einsätze', en: 'jobs', hi: 'काम', ta: 'வேலைகள்', bn: 'কাজ', te: 'పనులు' },
+  'cs.points':            { de: 'Pkt', en: 'pts', hi: 'अंक', ta: 'புள்', bn: 'পয়েন্ট', te: 'పాయింట్లు' },
+  'cs.engagement':        { de: 'Gemeinde-Aktivität', en: 'Community activity', hi: 'समुदाय गतिविधि', ta: 'சமூக செயல்பாடு', bn: 'সম্প্রদায় কার্যক্রম', te: 'సమాజ కార్యకలాపాలు' },
+  'cs.posts':             { de: 'Beiträge', en: 'Posts', hi: 'पोस्ट', ta: 'இடுகைகள்', bn: 'পোস্ট', te: 'పోస్ట్‌లు' },
+  'cs.activeTechs':       { de: 'Aktive Techniker', en: 'Active techs', hi: 'सक्रिय तकनीशियन', ta: 'செயல்திறன் நிபுணர்கள்', bn: 'সক্রিয় টেকনিশিয়ান', te: 'క్రియాశీల టెక్నీషియన్లు' },
+  'cs.kwhPerHh':          { de: 'kWh/Haushalt', en: 'kWh/household', hi: 'kWh/घर', ta: 'kWh/வீடு', bn: 'kWh/বাড়ি', te: 'kWh/గృహం' },
+
+  // ===== SETTINGS demo toggle =====
+  'set.demo':             { de: 'Demo / Präsentation', en: 'Demo / Presentation', hi: 'डेमो', ta: 'டெமோ', bn: 'ডেমো', te: 'డెమో' },
+  'set.monsoonDemo':      { de: 'Monsun-Banner', en: 'Monsoon banner', hi: 'मानसून बैनर', ta: 'பருவமழை பேனர்', bn: 'বর্ষা ব্যানার', te: 'వర్ష ఋతువు బ్యానర్' },
+
   // ===== SYSTEM =====
   'sys.title':       { de: 'Mein System', en: 'My system', hi: 'मेरा सिस्टम', ta: 'என் அமைப்பு', bn: 'আমার সিস্টেম', te: 'నా వ్యవస్థ' },
   'sys.subtitle':    { de: 'Geräte, Energie & Wartung.', en: 'Devices, energy & maintenance.', hi: 'उपकरण, ऊर्जा और रखरखाव।', ta: 'சாதனங்கள், ஆற்றல் & பராமரிப்பு.', bn: 'ডিভাইস, শক্তি ও রক্ষণাবেক্ষণ।', te: 'పరికరాలు, శక్తి & నిర్వహణ.' },

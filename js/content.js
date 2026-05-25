@@ -443,6 +443,32 @@ const CONTENT = {
       synced: true, source: 'community' }
   ],
 
+  // ===== MAINTENANCE HISTORY (per device) =====
+  maintenanceHistory: [
+    { id: 'm_1', deviceId: 'dev_p1', date: Date.now() - 1000*60*60*24*45,  techId: 'tech_3', kind: 'clean',     notes: { de: 'Routine-Reinigung', en: 'Routine cleaning', hi: 'सामान्य सफाई', ta: 'வழக்கமான சுத்தம்', bn: 'নিয়মিত পরিষ্কার', te: 'రొటీన్ శుభ్రపరచడం' } },
+    { id: 'm_2', deviceId: 'dev_p2', date: Date.now() - 1000*60*60*24*45,  techId: 'tech_3', kind: 'clean',     notes: { de: 'Routine-Reinigung', en: 'Routine cleaning', hi: 'सामान्य सफाई', ta: 'வழக்கமான சுத்தம்', bn: 'নিয়মিত পরিষ্কার', te: 'రొటీన్ శుభ్రపరచడం' } },
+    { id: 'm_3', deviceId: 'dev_p3', date: Date.now() - 1000*60*60*24*120, techId: 'tech_3', kind: 'inspect',   notes: { de: 'Sichtprüfung — kleine Verschmutzung erkannt', en: 'Visual check — light dirt', hi: 'दृश्य निरीक्षण — हल्की गंदगी', ta: 'காட்சி சோதனை — சிறிய அழுக்கு', bn: 'দৃশ্য পরীক্ষা — হালকা ময়লা', te: 'దృశ్య పరిశీలన — తేలికపాటి మురికి' } },
+    { id: 'm_4', deviceId: 'dev_b1', date: Date.now() - 1000*60*60*24*90,  techId: 'tech_2', kind: 'inspect',   notes: { de: 'Spannungstest — alle Zellen im Normbereich', en: 'Voltage test — all cells normal', hi: 'वोल्टेज परीक्षण — सामान्य', ta: 'மின்னழுத்த சோதனை — சாதாரண', bn: 'ভোল্টেজ পরীক্ষা — স্বাভাবিক', te: 'వోల్టేజ్ పరీక్ష — సాధారణ' } },
+    { id: 'm_5', deviceId: 'dev_i1', date: Date.now() - 1000*60*60*24*30,  techId: 'tech_1', kind: 'service',   notes: { de: 'Firmware-Update, Lüfter entstaubt', en: 'Firmware update, fan cleaned', hi: 'फर्मवेयर अपडेट', ta: 'ஃபர்ம்வேர் புதுப்பிப்பு', bn: 'ফার্মওয়্যার আপডেট', te: 'ఫర్మ్‌వేర్ నవీకరణ' } },
+    { id: 'm_6', deviceId: 'dev_p1', date: Date.now() - 1000*60*60*24*15,  techId: null,    kind: 'clean',     notes: { de: 'Selbst gereinigt (Eigenleistung)', en: 'Self-cleaned', hi: 'खुद साफ़ किया', ta: 'சுயமாக சுத்தம்', bn: 'নিজে পরিষ্কার', te: 'స్వయంగా శుభ్రం' } }
+  ],
+
+  // ===== TICKET COMMENTS (demo conversation) =====
+  ticketComments: [
+    { id: 'cm_1', ticketId: 'tk_c1', createdAt: Date.now() - 1000*60*12,
+      author: { name: 'Rajesh Kumar', role: 'technician', avatar: 'R' },
+      body: { de: 'Hi Anita, kannst du ein Foto vom Display schicken?', en: 'Hi Anita, can you send a photo of the display?', hi: 'अनीता, डिस्प्ले की फोटो भेज सकते हैं?', ta: 'அனிதா, டிஸ்ப்ளே புகைப்படம் அனுப்ப முடியுமா?', bn: 'অনিতা, ডিসপ্লের ছবি পাঠান?', te: 'అనిత, డిస్‌ప్లే ఫోటో పంపగలరా?' } },
+    { id: 'cm_2', ticketId: 'tk_c1', createdAt: Date.now() - 1000*60*8,
+      author: { name: 'Anita Patel', role: 'user', avatar: 'A' },
+      body: { de: 'Ja, mache ich gleich. Was bedeutet F03?', en: 'Yes, sending now. What is F03?', hi: 'हाँ, भेजती हूँ। F03 क्या है?', ta: 'ஆம், இப்போது அனுப்புகிறேன். F03 என்ன?', bn: 'হ্যাঁ, পাঠাচ্ছি। F03 কী?', te: 'అవును, ఇప్పుడే. F03 ఏమిటి?' } },
+    { id: 'cm_3', ticketId: 'tk_c1', createdAt: Date.now() - 1000*60*5,
+      author: { name: 'Rajesh Kumar', role: 'technician', avatar: 'R' },
+      body: { de: 'F03 = Batterie zu tief entladen. Inverter 30 Sek aus, dann wieder ein. Ich bin in 45 Min bei dir.', en: 'F03 = battery deeply discharged. Turn inverter off 30 sec, then on. I will be there in 45 min.', hi: 'F03 = बैटरी अति-निर्वहन। 30 सेकंड बंद, फिर ON।', ta: 'F03 = பேட்டரி ஆழமான மின்விழுவு. 30 விநாடி ஆஃப், ஆன்.', bn: 'F03 = ব্যাটারি গভীর ডিসচার্জ।', te: 'F03 = బ్యాటరీ డీప్ డిశ్చార్జ్.' } },
+    { id: 'cm_4', ticketId: 'tk_c3', createdAt: Date.now() - 1000*60*60*3,
+      author: { name: 'Arjun Reddy', role: 'technician', avatar: 'A' },
+      body: { de: 'Habe das Panel angeschaut — Hot-Spot. Tausch in 2 Wochen, organisiere Ersatz.', en: 'Looked at the panel — hot spot. Replacement in 2 weeks.', hi: 'पैनल देखा — हॉट-स्पॉट।', ta: 'பேனலை பார்த்தேன் — ஹாட்-ஸ்பாட்.', bn: 'প্যানেল দেখলাম — হট-স্পট।', te: 'ప్యానెల్ చూశాను — హాట్-స్పాట్.' } }
+  ],
+
   // ===== APPOINTMENTS =====
   appointments: [
     { id: 'app_1', techId: 'tech_3', scheduledFor: Date.now() + 1000*60*60*24*4,  status: 'confirmed',
