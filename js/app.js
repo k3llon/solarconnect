@@ -196,7 +196,26 @@ const app = {
       if (name === 'home') this.startSensor();
       else SENSOR.stop();
     }
+    // Weather auto-refresh — only while home is visible
+    if (name === 'home') this.startWeatherAutoRefresh();
+    else this.stopWeatherAutoRefresh();
+
     window.scrollTo(0, 0);
+  },
+
+  _weatherTimer: null,
+  WEATHER_REFRESH_MS: 10 * 60 * 1000,  // 10 minutes
+
+  startWeatherAutoRefresh() {
+    if (typeof Weather === 'undefined') return;
+    if (this._weatherTimer) return;
+    this._weatherTimer = setInterval(() => {
+      // Force a fresh fetch (bypassing the 30 min in-memory TTL inside Weather)
+      Weather.refresh().then(() => this.renderWeather()).catch(() => {});
+    }, this.WEATHER_REFRESH_MS);
+  },
+  stopWeatherAutoRefresh() {
+    if (this._weatherTimer) { clearInterval(this._weatherTimer); this._weatherTimer = null; }
   },
 
   // ===== HOME =====
@@ -209,42 +228,20 @@ const app = {
     const appts   = (await db.getAppointments()).sort((a,b) => a.scheduledFor - b.scheduledFor);
     const posts   = (await db.getPosts()).sort((a,b) => b.createdAt - a.createdAt);
 
-    // health score
-    const avgHealth = devices.length ? devices.reduce((s,d) => s + (d.health||0), 0) / devices.length : 100;
-    const healthScore = Math.round(avgHealth - open.length * 5);
-    const score = Math.max(40, Math.min(100, healthScore));
+    this._home = { reports, open, devices, logs };
+    this.updateHealthSummary();
 
-    document.getElementById('hero-ring').innerHTML = charts.ring({ value: score, size: 96, stroke: 9, color: '#FFE082', track: 'rgba(255,255,255,0.2)' });
-    const heroStatus = document.getElementById('hero-status');
-    const heroSub    = document.getElementById('hero-sub');
-    if (score >= 90)      { heroStatus.textContent = this.t('home.allGood');      heroSub.textContent = this.t('home.openReports', { n: open.length }); }
-    else if (score >= 70) { heroStatus.textContent = this.t('home.attention');    heroSub.textContent = this.t('home.check', { n: open.length }); }
-    else                  { heroStatus.textContent = this.t('home.intervention');heroSub.textContent = this.t('home.openReports', { n: open.length }); }
-
-    // tags
-    const power = open.some(r => r.type === 'power_outage');
-    const batt  = open.some(r => r.type === 'battery_issue');
-    const todayLog = logs[logs.length - 1];
-    const tagP = document.getElementById('tag-power');
-    const tagB = document.getElementById('tag-batt');
-    tagP.textContent = power ? this.t('home.powerFault') : this.t('home.powerOk');
-    tagP.className = power ? 'tag tag-danger' : 'tag tag-success';
-    tagB.textContent = `${this.t('home.battery')}: ${todayLog ? todayLog.battery : 85}%`;
-    tagB.className = batt ? 'tag tag-warn' : 'tag tag-success';
-
-    // weather
-    document.getElementById('weather-icon').innerHTML = charts.weatherIcon(CONTENT.weather.today.condition, 48);
-    document.getElementById('weather-temp').textContent = CONTENT.weather.today.temp;
-    const potKey = { 'Hoch': 'home.solarPotHigh', 'Mittel': 'home.solarPotMed', 'Niedrig': 'home.solarPotLow' }[CONTENT.weather.today.solarPotential] || 'home.solarPotHigh';
-    document.getElementById('weather-pot').textContent = this.t(potKey);
-    const dayKeyMap = { 'Heute': 'wd.today', 'Morgen': 'wd.tom', 'Mittwoch': 'wd.wed', 'Donners.': 'wd.thu', 'Freitag': 'wd.fri' };
-    document.getElementById('weather-forecast').innerHTML = CONTENT.weather.forecast.map(d => `
-      <div class="wf-day">
-        <div class="wf-name">${this.t(dayKeyMap[d.day] || 'wd.today')}</div>
-        ${charts.weatherIcon(d.condition, 28)}
-        <div class="wf-temp">${d.high}° / ${d.low}°</div>
-        <div class="wf-solar">${d.solar}%</div>
-      </div>`).join('');
+    // weather — show cached/mock immediately, then refresh live in background
+    this.renderWeather();
+    if (typeof Weather !== 'undefined' && navigator.onLine) {
+      const cached = JSON.parse(localStorage.getItem('owm_cache') || 'null');
+      const stale = !cached || (Date.now() - cached.fetchedAt) > 5 * 60 * 1000;
+      if (stale) {
+        Weather.refresh()
+          .then(() => this.renderWeather())
+          .catch(err => console.warn('[weather] refresh failed:', err.message));
+      }
+    }
 
     // energy chart
     document.getElementById('energy-chart').innerHTML = charts.bars({
@@ -282,6 +279,115 @@ const app = {
         <div style="flex:1;min-width:0"><strong>${this.escapeHtml(p.author)}</strong><br>
           <span class="muted">${this.escapeHtml(p.body.slice(0,80))}${p.body.length>80?'…':''}</span></div>
       </div>`).join('');
+  },
+
+  // Combined health summary — reflects devices, open reports AND live sensor
+  updateHealthSummary() {
+    if (!this._home) return;
+    const { open, devices, logs } = this._home;
+    const sensor = (typeof SENSOR !== 'undefined' && SENSOR.last) ? SENSOR.last : null;
+
+    // Base: device avg health, minus penalty per open report
+    let score = devices.length ? devices.reduce((s,d) => s + (d.health||0), 0) / devices.length : 100;
+    score -= open.length * 5;
+
+    // Sensor fault has the strongest impact — it means panels report bad data
+    if (sensor && sensor.status === 'fault') {
+      score = Math.min(score, 35);  // forces "intervention" tier
+    } else if (sensor && sensor.status === 'idle') {
+      // Very dark / night — small bonus floor so it doesn't show alarm at night
+    } else if (sensor && sensor.status === 'low') {
+      score -= 8;
+    }
+
+    score = Math.max(15, Math.min(100, Math.round(score)));
+
+    const ringEl = document.getElementById('hero-ring');
+    const heroStatus = document.getElementById('hero-status');
+    const heroSub    = document.getElementById('hero-sub');
+    if (!ringEl || !heroStatus || !heroSub) return;
+
+    const ringColor = score >= 70 ? '#FFE082' : score >= 45 ? '#FFB300' : '#FF8A65';
+    ringEl.innerHTML = charts.ring({ value: score, size: 96, stroke: 9, color: ringColor, track: 'rgba(255,255,255,0.2)' });
+
+    if (sensor && sensor.status === 'fault') {
+      heroStatus.textContent = this.t('home.intervention');
+      heroSub.textContent    = this.t('hero.sensorFault');
+    } else if (score >= 90) {
+      heroStatus.textContent = this.t('home.allGood');
+      heroSub.textContent    = this.t('home.openReports', { n: open.length });
+    } else if (score >= 70) {
+      heroStatus.textContent = this.t('home.attention');
+      heroSub.textContent    = this.t('home.check', { n: open.length });
+    } else {
+      heroStatus.textContent = this.t('home.intervention');
+      heroSub.textContent    = this.t('home.openReports', { n: open.length });
+    }
+
+    // Tags
+    const power = open.some(r => r.type === 'power_outage');
+    const batt  = open.some(r => r.type === 'battery_issue');
+    const todayLog = logs && logs[logs.length - 1];
+    const tagP = document.getElementById('tag-power');
+    const tagB = document.getElementById('tag-batt');
+    if (tagP) {
+      tagP.textContent = power ? this.t('home.powerFault') : this.t('home.powerOk');
+      tagP.className = power ? 'tag tag-danger' : 'tag tag-success';
+    }
+    if (tagB) {
+      tagB.textContent = `${this.t('home.battery')}: ${todayLog ? todayLog.battery : 85}%`;
+      tagB.className = batt ? 'tag tag-warn' : 'tag tag-success';
+    }
+  },
+
+  // Smart cross-check: weather + sensor + devices
+  // - Weather is bright but sensor underperforms → "check panels (maybe dirty?)"
+  // - Device flagged with note → surface it
+  checkSmartHints() {
+    const host = document.getElementById('smart-hint');
+    if (!host) return;
+    const sensor  = (typeof SENSOR !== 'undefined') ? SENSOR.last : null;
+    const weather = this._weatherToday;          // cached from renderWeather
+    const devices = this._home && this._home.devices ? this._home.devices : [];
+    const dirtyDevice = devices.find(d => d.status === 'warning' && (d.note || '').toLowerCase().includes('verschmut'));
+
+    // Weather solar potential percent (best-effort: from forecast[0] if present)
+    let solarPct = null;
+    if (weather && this._weatherForecast && this._weatherForecast[0]) {
+      solarPct = this._weatherForecast[0].solar;
+    }
+
+    let kind = null;        // 'dirty' | 'sensor_fault' | 'low_yield'
+    let title = '', text = '', action = '';
+
+    if (sensor && sensor.status === 'fault') {
+      kind = 'sensor_fault';
+      title = this.t('hint.sensorFaultTitle');
+      text  = this.t('hint.sensorFaultText');
+      action = `<button class="link-btn" onclick="app.startWizard('panel_damage')">${this.t('hint.openWizard')} →</button>`;
+    } else if (sensor && solarPct != null && solarPct >= 70 && sensor.percent <= 40 && sensor.status !== 'idle') {
+      kind = 'low_yield';
+      title = this.t('hint.lowYieldTitle');
+      text  = this.t('hint.lowYieldText', { sun: solarPct, prod: sensor.percent });
+      action = `<button class="link-btn" onclick="app.openArticle('art_clean')">${this.t('hint.cleanGuide')} →</button>`;
+    } else if (dirtyDevice) {
+      kind = 'dirty';
+      title = this.t('hint.dirtyTitle');
+      text  = this.t('hint.dirtyText', { name: dirtyDevice.name });
+      action = `<button class="link-btn" onclick="app.openArticle('art_clean')">${this.t('hint.cleanGuide')} →</button>`;
+    }
+
+    if (!kind) { host.classList.add('hidden'); host.innerHTML = ''; return; }
+    host.classList.remove('hidden');
+    host.innerHTML = `
+      <div class="smart-hint ${kind}">
+        <div class="sh-icon">${kind === 'sensor_fault' ? '⚠️' : '💡'}</div>
+        <div class="sh-body">
+          <div class="sh-title">${title}</div>
+          <div class="sh-text">${text}</div>
+          ${action}
+        </div>
+      </div>`;
   },
 
   renderApptCard(a, techs) {
@@ -1259,16 +1365,26 @@ const app = {
     const fcEl   = document.getElementById('weather-forecast');
     if (!iconEl || !tempEl || !potEl || !fcEl) return;
 
+    this._weatherToday    = today;
+    this._weatherForecast = data.forecast;
+
     iconEl.innerHTML = charts.weatherIcon(today.condition, 48);
     tempEl.textContent = today.temp;
-    potEl.textContent = today.solarPotential;
+    // localize solar potential
+    const potKey = { 'Hoch': 'home.solarPotHigh', 'Mittel': 'home.solarPotMed', 'Niedrig': 'home.solarPotLow' }[today.solarPotential];
+    potEl.textContent = potKey ? this.t(potKey) : (today.solarPotential || '');
+
+    const dayKeyMap = { 'Heute': 'wd.today', 'Morgen': 'wd.tom', 'Mittwoch': 'wd.wed', 'Mi': 'wd.wed', 'Donners.': 'wd.thu', 'Do': 'wd.thu', 'Freitag': 'wd.fri', 'Fr': 'wd.fri' };
     fcEl.innerHTML = data.forecast.map(d => `
       <div class="wf-day">
-        <div class="wf-name">${d.day}</div>
+        <div class="wf-name">${dayKeyMap[d.day] ? this.t(dayKeyMap[d.day]) : this.escapeHtml(d.day)}</div>
         ${charts.weatherIcon(d.condition, 28)}
         <div class="wf-temp">${d.high}° / ${d.low}°</div>
         <div class="wf-solar">${d.solar}%</div>
       </div>`).join('');
+
+    // Smart cross-check whenever weather changes
+    this.checkSmartHints();
 
     const meta = document.getElementById('weather-meta');
     if (meta) {
@@ -1398,6 +1514,8 @@ const app = {
       if (err && !data) { this.renderSensorError(err); return; }
       this.renderSensor(data);
       this.checkSensorAlert(data);
+      this.updateHealthSummary();   // sensor influences hero
+      this.checkSmartHints();       // sensor+weather mismatch
     });
   },
 
@@ -1409,6 +1527,8 @@ const app = {
       const data = await SENSOR.fetchLatest();
       this.renderSensor(data);
       this.checkSensorAlert(data);
+      this.updateHealthSummary();
+      this.checkSmartHints();
       this.showToast(this.t('sensor.refreshed'));
     } catch (e) {
       this.renderSensorError(e);

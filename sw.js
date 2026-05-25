@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solarconnect-v11';
+const CACHE_NAME = 'solarconnect-v12';
 const ASSETS = [
   './',
   './index.html',
