@@ -326,25 +326,24 @@ const app = {
     document.getElementById('wizard-grid').innerHTML = Object.entries(CONTENT.wizards).map(([key, w]) => `
       <div class="wizard-card" onclick="app.startWizard('${key}')">
         <div class="wc-icon">${wizardIcons[key] || ''}</div>
-        <h4>${w.title}</h4>
-        <div class="wc-meta">~${w.estMinutes} Min · Schritt für Schritt</div>
+        <h4>${this.escapeHtml(this.L(w.title))}</h4>
+        <div class="wc-meta">${this.t('sh.minSteps', { n: w.estMinutes })}</div>
       </div>`).join('');
 
     // KB filters
     const cats = [...new Set(CONTENT.articles.map(a => a.category))];
-    const catLabel = { maintenance: 'Wartung', safety: 'Sicherheit', weather: 'Wetter', planning: 'Planung', finance: 'Finanzierung' };
     document.getElementById('kb-filters').innerHTML =
-      `<button class="kb-filter ${this.kbFilter==='all'?'active':''}" onclick="app.setKbFilter('all')">Alle</button>` +
-      cats.map(c => `<button class="kb-filter ${this.kbFilter===c?'active':''}" onclick="app.setKbFilter('${c}')">${catLabel[c]||c}</button>`).join('');
+      `<button class="kb-filter ${this.kbFilter==='all'?'active':''}" onclick="app.setKbFilter('all')">${this.t('sh.filterAll')}</button>` +
+      cats.map(c => `<button class="kb-filter ${this.kbFilter===c?'active':''}" onclick="app.setKbFilter('${c}')">${this.t('cat.' + c)}</button>`).join('');
 
     // KB list
     const filtered = this.kbFilter === 'all' ? CONTENT.articles : CONTENT.articles.filter(a => a.category === this.kbFilter);
     document.getElementById('kb-list').innerHTML = filtered.map(a => `
       <div class="kb-card" onclick="app.openArticle('${a.id}')">
-        <span class="kb-cat">${catLabel[a.category] || a.category}</span>
-        <h4>${this.escapeHtml(a.title)}</h4>
-        <div class="kb-sum">${this.escapeHtml(a.summary)}</div>
-        <div class="kb-meta">📖 ${a.readMin} Min Lesezeit</div>
+        <span class="kb-cat">${this.t('cat.' + a.category)}</span>
+        <h4>${this.escapeHtml(this.L(a.title))}</h4>
+        <div class="kb-sum">${this.escapeHtml(this.L(a.summary))}</div>
+        <div class="kb-meta">${this.t('sh.minRead', { n: a.readMin })}</div>
       </div>`).join('');
   },
 
@@ -357,7 +356,7 @@ const app = {
     this.wizardKey = key;
     this.wizardStepId = w.root;
     this.wizardSeen = 1;
-    document.getElementById('wizard-title').textContent = w.title;
+    document.getElementById('wizard-title').textContent = this.L(w.title);
     this.showView('wizard');
     this.renderWizardStep();
   },
@@ -370,11 +369,11 @@ const app = {
     document.getElementById('wp-bar').style.width = Math.min(100, (this.wizardSeen / totalSteps) * 100) + '%';
 
     document.getElementById('wizard-step').innerHTML = `
-      <h3>${this.escapeHtml(step.title)}</h3>
-      <div class="ws-body">${this.escapeHtml(step.body)}</div>
+      <h3>${this.escapeHtml(this.L(step.title))}</h3>
+      <div class="ws-body">${this.escapeHtml(this.L(step.body))}</div>
       <div class="ws-options">
         ${step.options.map((opt, i) => `
-          <button class="ws-opt" onclick="app.wizardChoice(${i})">${this.escapeHtml(opt.label)}</button>
+          <button class="ws-opt" onclick="app.wizardChoice(${i})">${this.escapeHtml(this.L(opt.label))}</button>
         `).join('')}
       </div>`;
     if (navigator.vibrate) navigator.vibrate(20);
@@ -394,19 +393,17 @@ const app = {
 
     // Terminal action
     if (opt.action.type === 'tip') {
-      this.renderWizardResult('tip', '💡 Hinweis', opt.action.text);
+      this.renderWizardResult('tip', this.t('wiz.tip'), this.L(opt.action.text));
     } else if (opt.action.type === 'resolved') {
-      this.renderWizardResult('resolved', '✓ Gelöst!', 'Super! Das Problem ist behoben. Du brauchst keinen Techniker.');
+      this.renderWizardResult('resolved', this.t('wiz.resolved'), this.t('wiz.resolvedTxt'));
     } else if (opt.action.type === 'escalate') {
       const sev = opt.action.severity || 'medium';
       const type = opt.action.type_ || this.wizardKey;
-      const reportId = await this.autoCreateReport(type, sev, `Aus Wizard: ${w.title}`);
+      const reportId = await this.autoCreateReport(type, sev, `Aus Wizard: ${this.L(w.title)}`);
       const emergency = opt.action.emergency;
       this.renderWizardResult('escalate',
-        emergency ? '⚠ Notfall!' : '🔧 Techniker erforderlich',
-        emergency
-          ? 'Ticket angelegt. Nutze den Notfall-Modus, um sofort einen Techniker zu erreichen.'
-          : 'Ein Ticket wurde erstellt. Du kannst es im Support-Bereich verfolgen.',
+        emergency ? this.t('wiz.emergency') : this.t('wiz.techNeeded'),
+        emergency ? this.t('wiz.emergencyTxt') : this.t('wiz.techNeededTxt'),
         reportId, emergency
       );
     }
@@ -425,9 +422,9 @@ const app = {
 
   renderWizardResult(kind, heading, text, reportId = null, emergency = false) {
     const actions = [];
-    if (reportId) actions.push(`<button class="primary-btn" onclick="app.openTicket('${reportId}')" style="margin-top:14px">Ticket öffnen</button>`);
-    if (emergency) actions.push(`<button class="submit-btn" onclick="app.emergency()" style="margin-top:8px">Notfall-Modus</button>`);
-    actions.push(`<button class="ghost-btn" onclick="app.showView('selfhelp')" style="margin-top:8px">Zurück zur Selbsthilfe</button>`);
+    if (reportId)  actions.push(`<button class="primary-btn" onclick="app.openTicket('${reportId}')" style="margin-top:14px">${this.t('wiz.openTicket')}</button>`);
+    if (emergency) actions.push(`<button class="submit-btn" onclick="app.emergency()" style="margin-top:8px">${this.t('wiz.emergencyMode')}</button>`);
+    actions.push(`<button class="ghost-btn" onclick="app.showView('selfhelp')" style="margin-top:8px">${this.t('wiz.back')}</button>`);
 
     document.getElementById('wizard-step').innerHTML = `
       <div class="ws-result ${kind}">
@@ -442,13 +439,15 @@ const app = {
   openArticle(id) {
     const a = CONTENT.articles.find(x => x.id === id);
     if (!a) return;
-    document.getElementById('article-title').textContent = a.title;
+    document.getElementById('article-title').textContent = this.L(a.title);
     document.getElementById('article-body').innerHTML =
-      `<p style="color:var(--text-light);font-size:13px;margin-bottom:8px">📖 ${a.readMin} Min Lesezeit</p>` +
+      `<p style="color:var(--text-light);font-size:13px;margin-bottom:8px">${this.t('sh.minRead', { n: a.readMin })}</p>` +
       a.body.map(b => {
-        if (b.type === 'h')  return `<h3>${this.escapeHtml(b.text)}</h3>`;
-        if (b.type === 'p')  return `<p>${this.escapeHtml(b.text)}</p>`;
-        if (b.type === 'li') return `<ul><li>${this.escapeHtml(b.text)}</li></ul>`;
+        const text = this.L(b.text);
+        if (b.type === 'h')  return `<h3>${this.escapeHtml(text)}</h3>`;
+        if (b.type === 'p')  return `<p>${this.escapeHtml(text)}</p>`;
+        if (b.type === 'li') return `<ul><li>${this.escapeHtml(text)}</li></ul>`;
+        return '';
       }).join('');
     this.showView('article');
   },
