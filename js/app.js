@@ -167,7 +167,7 @@ const app = {
       report: 'support', history: 'support', ticket: 'support', technicians: 'support', appointments: 'support',
       wizard: 'selfhelp', article: 'selfhelp', ai: 'selfhelp',
       device: 'system', analytics: 'system',
-      community: 'more', learning: 'more', lesson: 'more', alerts: 'more', settings: 'more'
+      community: 'more', learning: 'more', lesson: 'more', alerts: 'more', settings: 'more', claude: 'more'
     };
     if (parentMap[name]) {
       document.querySelectorAll('.nav-btn').forEach(b => {
@@ -185,6 +185,7 @@ const app = {
       report: 'resetReportForm', ai: 'loadChat'
     };
     if (loaders[name] && this[loaders[name]]) this[loaders[name]]();
+    if (name === 'claude' && typeof Claude !== 'undefined') Claude.init();
     window.scrollTo(0, 0);
   },
 
@@ -1109,12 +1110,77 @@ const app = {
       if (li) li.value = language;
     }
     document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+
+    const owmInput = document.getElementById('setting-owm-key');
+    if (owmInput) owmInput.value = localStorage.getItem('owm_api_key') || '';
+    const claudeInput = document.getElementById('setting-claude-key');
+    if (claudeInput) claudeInput.value = localStorage.getItem('claude_api_key') || '';
   },
 
   selectRole(btn) {
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     this.selectedRole = btn.dataset.role;
+  },
+
+  async renderWeather() {
+    if (typeof Weather === 'undefined') return;
+    const data = await Weather.get();
+    const today = data.today;
+    const iconEl = document.getElementById('weather-icon');
+    const tempEl = document.getElementById('weather-temp');
+    const potEl  = document.getElementById('weather-pot');
+    const fcEl   = document.getElementById('weather-forecast');
+    if (!iconEl || !tempEl || !potEl || !fcEl) return;
+
+    iconEl.innerHTML = charts.weatherIcon(today.condition, 48);
+    tempEl.textContent = today.temp;
+    potEl.textContent = today.solarPotential;
+    fcEl.innerHTML = data.forecast.map(d => `
+      <div class="wf-day">
+        <div class="wf-name">${d.day}</div>
+        ${charts.weatherIcon(d.condition, 28)}
+        <div class="wf-temp">${d.high}° / ${d.low}°</div>
+        <div class="wf-solar">${d.solar}%</div>
+      </div>`).join('');
+
+    const meta = document.getElementById('weather-meta');
+    if (meta) {
+      const labels = { live: '● Live', cache: '◉ Cache', 'cache-stale': '⚠ Veraltet', mock: '○ Demo-Daten' };
+      const subtitle = today.description ? today.description.charAt(0).toUpperCase() + today.description.slice(1) : '';
+      meta.innerHTML = `
+        <span class="w-meta-status w-${data.source}">${labels[data.source] || data.source}</span>
+        ${data.city ? `<span class="w-meta-city">${data.city}</span>` : ''}
+        ${subtitle ? `<span class="w-meta-desc">· ${subtitle}</span>` : ''}
+        ${today.humidity != null ? `<span class="w-meta-desc">· 💧 ${today.humidity}%</span>` : ''}
+        ${today.wind != null ? `<span class="w-meta-desc">· 💨 ${today.wind} km/h</span>` : ''}
+      `;
+    }
+
+    // Fehler-Hinweis direkt in der Karte anzeigen
+    const errEl = document.getElementById('weather-error');
+    if (errEl) {
+      if (data.error && (data.source === 'mock' || data.source === 'cache-stale')) {
+        errEl.classList.remove('hidden');
+        errEl.innerHTML = `
+          <strong>⚠ Live-Wetter nicht verfügbar</strong>
+          <div>${data.error}</div>
+          <button class="link-btn" onclick="app.refreshWeather()" style="margin-top:6px;">Erneut versuchen</button>
+        `;
+      } else {
+        errEl.classList.add('hidden');
+        errEl.innerHTML = '';
+      }
+    }
+  },
+
+  async refreshWeather() {
+    if (typeof Weather === 'undefined') return;
+    const btn = document.getElementById('weather-refresh');
+    if (btn) btn.classList.add('spinning');
+    await Weather.refresh();
+    await this.renderWeather();
+    if (btn) setTimeout(() => btn.classList.remove('spinning'), 400);
   },
 
   setTheme(btn) {
@@ -1144,6 +1210,14 @@ const app = {
     await db.setSetting('contrast', contrast);
     await db.setSetting('large', large);
 
+    const owmKey = document.getElementById('setting-owm-key').value.trim();
+    const claudeKey = document.getElementById('setting-claude-key').value.trim();
+    if (owmKey) localStorage.setItem('owm_api_key', owmKey);
+    else localStorage.removeItem('owm_api_key');
+    if (claudeKey) localStorage.setItem('claude_api_key', claudeKey);
+    else localStorage.removeItem('claude_api_key');
+    localStorage.removeItem('owm_cache');
+
     document.body.classList.toggle('contrast', contrast);
     document.body.classList.toggle('large', large);
 
@@ -1155,6 +1229,8 @@ const app = {
 
     this.showToast(this.t('set.saved'));
     if (navigator.vibrate) navigator.vibrate(30);
+
+    if (owmKey && typeof Weather !== 'undefined') Weather.refresh().then(() => this.loadHome());
   },
 
   // ===== OFFLINE / SYNC =====

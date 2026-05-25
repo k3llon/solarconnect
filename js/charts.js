@@ -78,7 +78,9 @@ const charts = {
       sunny:         `<circle cx="12" cy="12" r="5" fill="#FFB300"/><g stroke="#FFB300" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="7" y2="7"/><line x1="17" y1="17" x2="19" y2="19"/><line x1="5" y1="19" x2="7" y2="17"/><line x1="17" y1="7" x2="19" y2="5"/></g>`,
       partly_cloudy: `<circle cx="9" cy="9" r="3.5" fill="#FFB300"/><path d="M7 17 a4 4 0 0 1 0 -8 a5 5 0 0 1 10 1 a3.5 3.5 0 0 1 -1 7 z" fill="#b0bec5"/>`,
       cloudy:        `<path d="M7 17 a4 4 0 0 1 0 -8 a5 5 0 0 1 10 1 a3.5 3.5 0 0 1 -1 7 z" fill="#90a4ae"/>`,
-      rain:          `<path d="M7 14 a4 4 0 0 1 0 -8 a5 5 0 0 1 10 1 a3.5 3.5 0 0 1 -1 7 z" fill="#78909c"/><g stroke="#1976d2" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="17" x2="7" y2="20"/><line x1="12" y1="17" x2="11" y2="20"/><line x1="16" y1="17" x2="15" y2="20"/></g>`
+      rain:          `<path d="M7 14 a4 4 0 0 1 0 -8 a5 5 0 0 1 10 1 a3.5 3.5 0 0 1 -1 7 z" fill="#78909c"/><g stroke="#1976d2" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="17" x2="7" y2="20"/><line x1="12" y1="17" x2="11" y2="20"/><line x1="16" y1="17" x2="15" y2="20"/></g>`,
+      storm:         `<path d="M7 14 a4 4 0 0 1 0 -8 a5 5 0 0 1 10 1 a3.5 3.5 0 0 1 -1 7 z" fill="#546e7a"/><polygon points="11,16 9,21 12,21 10,24 14,18 11,18" fill="#FFB300"/>`,
+      snow:          `<path d="M7 14 a4 4 0 0 1 0 -8 a5 5 0 0 1 10 1 a3.5 3.5 0 0 1 -1 7 z" fill="#b0bec5"/><g fill="#ffffff" stroke="#90a4ae" stroke-width="0.5"><circle cx="8" cy="19" r="1"/><circle cx="12" cy="20" r="1"/><circle cx="16" cy="19" r="1"/></g>`
     };
     return `<svg viewBox="0 0 24 24" width="${size}" height="${size}">${m[cond] || m.sunny}</svg>`;
   }
