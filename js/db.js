@@ -1,6 +1,6 @@
 // IndexedDB wrapper for offline-first data storage
 const DB_NAME = 'solarconnect';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const STORES = [
   { name: 'reports',      keyPath: 'id', indexes: [['timestamp','timestamp'],['synced','synced'],['status','status']] },
@@ -14,7 +14,8 @@ const STORES = [
   { name: 'appointments', keyPath: 'id', indexes: [['scheduledFor','scheduledFor']] },
   { name: 'posts',        keyPath: 'id', indexes: [['createdAt','createdAt']] },
   { name: 'progress',     keyPath: 'lessonId' },
-  { name: 'maintenance',  keyPath: 'id', indexes: [['deviceId','deviceId'],['date','date']] }
+  { name: 'maintenance',  keyPath: 'id', indexes: [['deviceId','deviceId'],['date','date']] },
+  { name: 'chats',        keyPath: 'id', indexes: [['timestamp','timestamp']] }
 ];
 
 const db = {
@@ -123,5 +124,18 @@ const db = {
 
   // ---- Maintenance history
   addMaintenance:  (m) => db._tx('maintenance', 'readwrite', s => s.put(m)),
-  getMaintenance:  ()  => db._tx('maintenance', 'readonly',  s => s.getAll())
+  getMaintenance:  ()  => db._tx('maintenance', 'readonly',  s => s.getAll()),
+
+  // ---- Chat (AI assistant)
+  addChat: (c) => db._tx('chats', 'readwrite', s => s.put(c)),
+  getChats:()  => db._tx('chats', 'readonly',  s => s.getAll()),
+  async clearChats() {
+    const database = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = database.transaction('chats', 'readwrite');
+      tx.objectStore('chats').clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
 };

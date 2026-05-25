@@ -12,18 +12,72 @@ const app = {
   lessonId: null,
   lessonIndex: 0,
   onbStep: 1,
+  lang: 'de',
 
-  problemLabels: {
-    power_outage: 'Kein Strom', battery_issue: 'Batterie-Problem',
-    panel_damage: 'Panel kaputt', inverter_issue: 'Wechselrichter',
-    wiring_issue: 'Kabel / Leitung', other: 'Sonstiges'
+  // ===== i18n =====
+  t(key, vars = {}) {
+    const entry = I18N[key];
+    let str = (entry && (entry[this.lang] || entry.de)) || key;
+    for (const [k, v] of Object.entries(vars)) {
+      str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), v);
+    }
+    return str;
   },
-  severityLabels: { low: 'Nicht dringend', medium: 'Mittel', high: 'Dringend' },
-  statusLabels:   { open: 'Offen', progress: 'In Arbeit', resolved: 'Behoben' },
+
+  // Resolve multilingual object {de:..., en:..., hi:...} → string
+  L(o) {
+    if (o == null) return '';
+    if (typeof o === 'string') return o;
+    return o[this.lang] || o.de || o.en || Object.values(o)[0] || '';
+  },
+
+  applyI18n(root) {
+    const scope = root || document;
+    scope.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      el.innerHTML = this.t(key);
+    });
+    scope.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      el.setAttribute('placeholder', this.t(el.getAttribute('data-i18n-ph')));
+    });
+    scope.querySelectorAll('[data-i18n-aria]').forEach(el => {
+      el.setAttribute('aria-label', this.t(el.getAttribute('data-i18n-aria')));
+    });
+    document.documentElement.lang = this.lang;
+  },
+
+  async setLang(code) {
+    this.lang = code;
+    this.selectedLang = code;
+    await db.setSetting('language', code);
+    this.applyI18n();
+    // re-render whatever view is active so dynamic strings update
+    this.showView(this.currentView);
+  },
+
+  get problemLabels() {
+    return {
+      power_outage:   this.t('prob.power_outage'),
+      battery_issue:  this.t('prob.battery_issue'),
+      panel_damage:   this.t('prob.panel_damage'),
+      inverter_issue: this.t('prob.inverter_issue'),
+      wiring_issue:   this.t('prob.wiring_issue'),
+      other:          this.t('prob.other')
+    };
+  },
+  get severityLabels() {
+    return { low: this.t('rep.urgency.low'), medium: this.t('rep.urgency.medium'), high: this.t('rep.urgency.high') };
+  },
+  get statusLabels() {
+    return { open: this.t('st.open'), progress: this.t('st.progress'), resolved: this.t('st.resolved') };
+  },
 
   // ===== INIT =====
   async init() {
     await db.open();
+    const storedLang = await db.getSetting('language');
+    if (storedLang) this.lang = storedLang;
+    this.applyI18n();
     await this.loadSettings();
     await this.seedAll();
     this.applyTheme();
@@ -50,6 +104,8 @@ const app = {
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     this.selectedLang = btn.dataset.lang;
+    this.lang = btn.dataset.lang;
+    this.applyI18n();
   },
 
   async onbFinish() {
@@ -88,7 +144,7 @@ const app = {
   },
 
   async resetDemo() {
-    if (!confirm('Alle lokalen Daten und Demo-Inhalte zurücksetzen?')) return;
+    if (!confirm(this.t('set.resetConfirm'))) return;
     indexedDB.deleteDatabase('solarconnect');
     setTimeout(() => location.reload(), 300);
   },
@@ -109,7 +165,7 @@ const app = {
     // If sub-view, highlight parent tab
     const parentMap = {
       report: 'support', history: 'support', ticket: 'support', technicians: 'support', appointments: 'support',
-      wizard: 'selfhelp', article: 'selfhelp',
+      wizard: 'selfhelp', article: 'selfhelp', ai: 'selfhelp',
       device: 'system', analytics: 'system',
       community: 'more', learning: 'more', lesson: 'more', alerts: 'more', settings: 'more', claude: 'more'
     };
@@ -126,7 +182,7 @@ const app = {
       technicians: 'loadTechnicians', community: 'loadCommunity',
       learning: 'loadLearning', alerts: 'loadAlerts',
       appointments: 'loadAllAppts', analytics: 'loadAnalytics',
-      report: 'resetReportForm'
+      report: 'resetReportForm', ai: 'loadChat'
     };
     if (loaders[name] && this[loaders[name]]) this[loaders[name]]();
     if (name === 'claude' && typeof Claude !== 'undefined') Claude.init();
@@ -151,9 +207,9 @@ const app = {
     document.getElementById('hero-ring').innerHTML = charts.ring({ value: score, size: 96, stroke: 9, color: '#FFE082', track: 'rgba(255,255,255,0.2)' });
     const heroStatus = document.getElementById('hero-status');
     const heroSub    = document.getElementById('hero-sub');
-    if (score >= 90)      { heroStatus.textContent = 'Alles in Ordnung'; heroSub.textContent = `${open.length} offene Meldungen`; }
-    else if (score >= 70) { heroStatus.textContent = 'Aufmerksamkeit nötig'; heroSub.textContent = `${open.length} Meldungen prüfen`; }
-    else                  { heroStatus.textContent = 'Eingriff erforderlich'; heroSub.textContent = `${open.length} Meldungen offen`; }
+    if (score >= 90)      { heroStatus.textContent = this.t('home.allGood');      heroSub.textContent = this.t('home.openReports', { n: open.length }); }
+    else if (score >= 70) { heroStatus.textContent = this.t('home.attention');    heroSub.textContent = this.t('home.check', { n: open.length }); }
+    else                  { heroStatus.textContent = this.t('home.intervention');heroSub.textContent = this.t('home.openReports', { n: open.length }); }
 
     // tags
     const power = open.some(r => r.type === 'power_outage');
@@ -161,13 +217,24 @@ const app = {
     const todayLog = logs[logs.length - 1];
     const tagP = document.getElementById('tag-power');
     const tagB = document.getElementById('tag-batt');
-    tagP.textContent = power ? 'Strom: Störung' : 'Strom: OK';
+    tagP.textContent = power ? this.t('home.powerFault') : this.t('home.powerOk');
     tagP.className = power ? 'tag tag-danger' : 'tag tag-success';
-    tagB.textContent = `Batterie: ${todayLog ? todayLog.battery : 85}%`;
+    tagB.textContent = `${this.t('home.battery')}: ${todayLog ? todayLog.battery : 85}%`;
     tagB.className = batt ? 'tag tag-warn' : 'tag tag-success';
 
-    // weather (live via OpenWeatherMap, mit Fallback)
-    this.renderWeather();
+    // weather
+    document.getElementById('weather-icon').innerHTML = charts.weatherIcon(CONTENT.weather.today.condition, 48);
+    document.getElementById('weather-temp').textContent = CONTENT.weather.today.temp;
+    const potKey = { 'Hoch': 'home.solarPotHigh', 'Mittel': 'home.solarPotMed', 'Niedrig': 'home.solarPotLow' }[CONTENT.weather.today.solarPotential] || 'home.solarPotHigh';
+    document.getElementById('weather-pot').textContent = this.t(potKey);
+    const dayKeyMap = { 'Heute': 'wd.today', 'Morgen': 'wd.tom', 'Mittwoch': 'wd.wed', 'Donners.': 'wd.thu', 'Freitag': 'wd.fri' };
+    document.getElementById('weather-forecast').innerHTML = CONTENT.weather.forecast.map(d => `
+      <div class="wf-day">
+        <div class="wf-name">${this.t(dayKeyMap[d.day] || 'wd.today')}</div>
+        ${charts.weatherIcon(d.condition, 28)}
+        <div class="wf-temp">${d.high}° / ${d.low}°</div>
+        <div class="wf-solar">${d.solar}%</div>
+      </div>`).join('');
 
     // energy chart
     document.getElementById('energy-chart').innerHTML = charts.bars({
@@ -190,13 +257,13 @@ const app = {
     const nextAppt = appts.find(a => a.scheduledFor > Date.now());
     document.getElementById('next-appointment').innerHTML = nextAppt
       ? this.renderApptCard(nextAppt, await db.getTechnicians())
-      : '<div class="empty-state"><p>Kein anstehender Termin</p></div>';
+      : `<div class="empty-state"><p>${this.t('home.noAppt')}</p></div>`;
 
     // recent reports
     const recent = reports.sort((a,b) => b.timestamp - a.timestamp).slice(0,3);
     document.getElementById('recent-reports').innerHTML = recent.length
       ? recent.map(r => this.renderReportItem(r)).join('')
-      : '<div class="empty-state"><p>Keine Meldungen — alles in Ordnung!</p></div>';
+      : `<div class="empty-state"><p>${this.t('home.noReports')}</p></div>`;
 
     // community ticker
     document.getElementById('community-ticker').innerHTML = posts.slice(0,2).map(p => `
@@ -211,24 +278,25 @@ const app = {
     const tech = techs.find(t => t.id === a.techId);
     const date = new Date(a.scheduledFor);
     const day = date.getDate();
-    const mon = date.toLocaleDateString('de-DE', { month: 'short' });
+    const mon = date.toLocaleDateString(this.lang === 'en' ? 'en-US' : 'de-DE', { month: 'short' });
     return `<div class="appt-card">
       <div class="appt-date">
         <div class="ad-day">${day}</div>
         <div class="ad-mon">${mon}</div>
       </div>
       <div class="appt-body">
-        <div class="appt-title">${this.escapeHtml(a.title)}</div>
-        <div class="appt-meta">${tech ? this.escapeHtml(tech.name) : 'Techniker offen'}</div>
-        <div class="appt-meta">${this.escapeHtml(a.notes || '')}</div>
-        <span class="appt-status ${a.status}">${a.status === 'confirmed' ? 'Bestätigt' : 'Ausstehend'}</span>
+        <div class="appt-title">${this.escapeHtml(this.L(a.title))}</div>
+        <div class="appt-meta">${tech ? this.escapeHtml(tech.name) : this.t('sup.techOpen')}</div>
+        <div class="appt-meta">${this.escapeHtml(this.L(a.notes) || '')}</div>
+        <span class="appt-status ${a.status}">${a.status === 'confirmed' ? this.t('sup.confirmed') : this.t('sup.pending')}</span>
       </div>
     </div>`;
   },
 
   renderReportItem(r) {
     const d = new Date(r.timestamp);
-    const time = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const loc = this.lang === 'en' ? 'en-US' : 'de-DE';
+    const time = d.toLocaleDateString(loc, { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
     return `<div class="report-item" onclick="app.openTicket('${r.id}')">
       <div class="report-icon severity-${r.severity}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -400,7 +468,7 @@ const app = {
     document.getElementById('tic-done').textContent = reports.filter(r => r.status === 'resolved').length;
     document.getElementById('ticket-list').innerHTML = reports.length
       ? reports.map(r => this.renderReportItem(r)).join('')
-      : '<div class="empty-state"><p>Keine Tickets vorhanden.</p></div>';
+      : `<div class="empty-state"><p>${this.t('sup.noTickets')}</p></div>`;
   },
 
   async loadTechsTab() {
@@ -413,7 +481,7 @@ const app = {
     const appts = (await db.getAppointments()).sort((a,b) => a.scheduledFor - b.scheduledFor);
     document.getElementById('appointment-list').innerHTML = appts.length
       ? appts.map(a => this.renderApptCard(a, techs)).join('')
-      : '<div class="empty-state"><p>Noch keine Termine vereinbart.</p></div>';
+      : `<div class="empty-state"><p>${this.t('sup.noAppts')}</p></div>`;
   },
 
   async loadAllAppts() {
@@ -421,11 +489,11 @@ const app = {
     const appts = (await db.getAppointments()).sort((a,b) => a.scheduledFor - b.scheduledFor);
     document.getElementById('all-appts').innerHTML = appts.length
       ? appts.map(a => this.renderApptCard(a, techs)).join('')
-      : '<div class="empty-state"><p>Keine Termine.</p></div>';
+      : `<div class="empty-state"><p>${this.t('sup.noAppts')}</p></div>`;
   },
 
   renderTechs(techs) {
-    if (!techs.length) return '<div class="empty-state"><p>Noch keine Techniker registriert.</p></div>';
+    if (!techs.length) return `<div class="empty-state"><p>${this.t('sup.noTechs')}</p></div>`;
     return techs.map(t => `
       <div class="tech-card">
         <div class="tech-avatar">${(t.name || '?').charAt(0)}</div>
@@ -435,7 +503,7 @@ const app = {
           <div class="tech-phone">${this.escapeHtml(t.phone || '')}</div>
           <div class="tech-meta">
             ${t.rating ? `<span><span class="star">★</span> ${t.rating}</span>` : ''}
-            ${t.jobs  ? `<span>${t.jobs} Einsätze</span>` : ''}
+            ${t.jobs  ? `<span>${this.t('sup.jobs', { n: t.jobs })}</span>` : ''}
             ${t.district ? `<span>📍 ${this.escapeHtml(t.district)}</span>` : ''}
           </div>
         </div>
@@ -462,14 +530,14 @@ const app = {
     const phone = document.getElementById('tech-phone').value.trim();
     const specialty = document.getElementById('tech-specialty').value.trim();
     const district = document.getElementById('tech-district').value.trim();
-    if (!name || !phone) { this.showToast('Name und Telefon nötig'); return; }
+    if (!name || !phone) { this.showToast(this.t('mod.nameRequired')); return; }
     await db.addTechnician({
       id: 'tech_' + Date.now(), name, phone,
       specialty: specialty || 'Allgemein', district: district || '—', rating: 0, jobs: 0
     });
     this.closeModal();
     await this.loadTechsTab();
-    this.showToast('Techniker hinzugefügt!');
+    this.showToast(this.t('mod.techAdded'));
   },
 
   // ===== TICKET DETAIL =====
@@ -479,16 +547,17 @@ const app = {
     if (!r) return;
     const techs = await db.getTechnicians();
     const d = new Date(r.timestamp);
-    const time = d.toLocaleDateString('de-DE') + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const loc = this.lang === 'en' ? 'en-US' : 'de-DE';
+    const time = d.toLocaleDateString(loc) + ' ' + d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
 
     const timeline = [
-      { time: time, text: `Ticket erstellt (${this.severityLabels[r.severity]})`, dot: r.severity === 'high' ? 'danger' : 'warn' }
+      { time: time, text: `${this.t('tic.created')} (${this.severityLabels[r.severity]})`, dot: r.severity === 'high' ? 'danger' : 'warn' }
     ];
     if (r.status === 'progress' || r.status === 'resolved') {
-      timeline.push({ time: 'Folge', text: 'Techniker zugewiesen — Diagnose läuft', dot: '' });
+      timeline.push({ time: this.t('tic.followup'), text: this.t('tic.assigned'), dot: '' });
     }
     if (r.status === 'resolved') {
-      timeline.push({ time: 'Heute', text: 'Problem behoben — Ticket geschlossen', dot: '' });
+      timeline.push({ time: this.t('tic.today'), text: this.t('tic.closed'), dot: '' });
     }
 
     document.getElementById('ticket-detail').innerHTML = `
@@ -500,7 +569,7 @@ const app = {
       </div>
 
       <div class="card">
-        <div class="card-head"><h3>Status ändern</h3></div>
+        <div class="card-head"><h3>${this.t('tic.changeStatus')}</h3></div>
         <div style="display:flex;gap:6px">
           ${['open','progress','resolved'].map(s => `
             <button class="tab-pill ${r.status===s?'active':''}" onclick="app.setTicketStatus('${r.id}','${s}')">${this.statusLabels[s]}</button>
@@ -509,7 +578,7 @@ const app = {
       </div>
 
       <div class="card">
-        <div class="card-head"><h3>Verlauf</h3></div>
+        <div class="card-head"><h3>${this.t('tic.timeline')}</h3></div>
         <div class="timeline">
           ${timeline.map(t => `
             <div class="tl-item">
@@ -521,7 +590,7 @@ const app = {
       </div>
 
       <div class="card">
-        <div class="card-head"><h3>Empfohlene Techniker</h3></div>
+        <div class="card-head"><h3>${this.t('tic.recommendedTech')}</h3></div>
         ${this.renderTechs(techs.slice(0,2))}
       </div>
     `;
@@ -536,7 +605,7 @@ const app = {
     r.synced = false;
     await db.updateReport(r);
     this.openTicket(id);
-    this.showToast('Status aktualisiert');
+    this.showToast(this.t('tic.statusUpdated'));
   },
 
   // ===== REPORT =====
@@ -588,7 +657,7 @@ const app = {
     }
 
     if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
-    this.showToast('Ticket erstellt!');
+    this.showToast(this.t('rep.created'));
     this.openTicket(report.id);
     this.trySync();
   },
@@ -598,7 +667,7 @@ const app = {
     const reports = (await db.getReports()).sort((a,b) => b.timestamp - a.timestamp);
     document.getElementById('history-list').innerHTML = reports.length
       ? reports.map(r => this.renderReportItem(r)).join('')
-      : '<div class="empty-state"><p>Noch keine Meldungen.</p></div>';
+      : `<div class="empty-state"><p>${this.t('his.empty')}</p></div>`;
   },
 
   // ===== SYSTEM =====
@@ -617,7 +686,7 @@ const app = {
     const devices = await db.getDevices();
     const counts = { panel: 0, battery: 0, inverter: 0, controller: 0 };
     devices.forEach(d => counts[d.type] = (counts[d.type] || 0) + 1);
-    const labels = { panel: 'Panels', battery: 'Batterien', inverter: 'Inverter', controller: 'Controller' };
+    const labels = { panel: this.t('sys.panels'), battery: this.t('sys.batteries'), inverter: this.t('sys.inverters'), controller: this.t('sys.controllers') };
     document.getElementById('device-summary').innerHTML = Object.entries(counts).map(([k, v]) => `
       <div class="ds-card">
         <div class="ds-icon ${k}">${this.deviceIcon(k)}</div>
@@ -652,30 +721,31 @@ const app = {
       const warrantyEnd = new Date(d.installedAt + d.warrantyYears * 365 * 24 * 60 * 60 * 1000);
       const warrantyValid = warrantyEnd > new Date();
       document.getElementById('device-title').textContent = d.name;
+      const statusLabel = d.status === 'good' ? this.t('dev.ok') : (d.status === 'warning' ? this.t('dev.attention') : this.t('dev.fault'));
       document.getElementById('device-detail').innerHTML = `
         <div class="device-hero">
-          ${charts.ring({ value: d.health, size: 100, stroke: 10, color: d.status === 'good' ? '#1a6b3c' : '#FB8C00', label: 'Gesundheit' })}
+          ${charts.ring({ value: d.health, size: 100, stroke: 10, color: d.status === 'good' ? '#1a6b3c' : '#FB8C00', label: this.t('dev.health') })}
           <h3>${this.escapeHtml(d.name)}</h3>
           <div class="dh-serial">SN: ${this.escapeHtml(d.serial)}</div>
           ${d.note ? `<div style="margin-top:8px;color:var(--orange);font-size:13px">⚠ ${this.escapeHtml(d.note)}</div>` : ''}
           <div class="spec-list">
-            <div class="spec-item"><div class="sl-lbl">Installiert</div><div class="sl-val">vor ${yearsOld} Jahren</div></div>
-            <div class="spec-item"><div class="sl-lbl">Typ</div><div class="sl-val">${d.type}</div></div>
-            <div class="spec-item"><div class="sl-lbl">Garantie</div><div class="sl-val">${warrantyValid ? 'Aktiv bis ' + warrantyEnd.getFullYear() : 'Abgelaufen'}</div></div>
-            <div class="spec-item"><div class="sl-lbl">Status</div><div class="sl-val">${d.status === 'good' ? 'OK' : (d.status === 'warning' ? 'Achtung' : 'Fehler')}</div></div>
-            ${d.cycles ? `<div class="spec-item"><div class="sl-lbl">Ladezyklen</div><div class="sl-val">${d.cycles}</div></div>` : ''}
+            <div class="spec-item"><div class="sl-lbl">${this.t('dev.installed')}</div><div class="sl-val">${this.t('dev.yearsAgo', { n: yearsOld })}</div></div>
+            <div class="spec-item"><div class="sl-lbl">${this.t('dev.type')}</div><div class="sl-val">${d.type}</div></div>
+            <div class="spec-item"><div class="sl-lbl">${this.t('dev.warranty')}</div><div class="sl-val">${warrantyValid ? this.t('dev.warrUntil', { y: warrantyEnd.getFullYear() }) : this.t('dev.warrExpired')}</div></div>
+            <div class="spec-item"><div class="sl-lbl">${this.t('dev.status')}</div><div class="sl-val">${statusLabel}</div></div>
+            ${d.cycles ? `<div class="spec-item"><div class="sl-lbl">${this.t('dev.cycles')}</div><div class="sl-val">${d.cycles}</div></div>` : ''}
           </div>
         </div>
 
         <div class="card">
-          <div class="card-head"><h3>Aktionen</h3></div>
-          <button class="primary-btn" style="margin-bottom:8px" onclick="app.showView('report')">Problem melden</button>
-          <button class="ghost-btn" onclick="app.scheduleAppointment()">Wartung planen</button>
+          <div class="card-head"><h3>${this.t('dev.actions')}</h3></div>
+          <button class="primary-btn" style="margin-bottom:8px" onclick="app.showView('report')">${this.t('dev.reportProblem')}</button>
+          <button class="ghost-btn" onclick="app.scheduleAppointment()">${this.t('dev.planMaint')}</button>
         </div>
 
         ${d.type === 'battery' ? `
         <div class="card">
-          <div class="card-head"><h3>Batterie-Trend (14 Tage)</h3></div>
+          <div class="card-head"><h3>${this.t('dev.battTrend')}</h3></div>
           <div id="batt-trend"></div>
         </div>` : ''}
       `;
@@ -721,43 +791,44 @@ const app = {
     const dieselLit  = (totalProd * 0.27).toFixed(1);   // L diesel equivalent
     const trees      = Math.round(totalProd * 0.04);
     document.getElementById(targetId).innerHTML = `
-      <div class="impact-card"><div class="ic-emoji">💰</div><div class="ic-val">₹${moneySaved}</div><div class="ic-lbl">In 14 Tagen gespart</div></div>
-      <div class="impact-card"><div class="ic-emoji">📈</div><div class="ic-val">₹${yearProj}</div><div class="ic-lbl">Hochrechnung Jahr</div></div>
-      <div class="impact-card"><div class="ic-emoji">🌍</div><div class="ic-val">${co2} kg</div><div class="ic-lbl">CO₂ vermieden</div></div>
-      <div class="impact-card"><div class="ic-emoji">⛽</div><div class="ic-val">${dieselLit} L</div><div class="ic-lbl">Diesel ersetzt</div></div>
-      <div class="impact-card"><div class="ic-emoji">🌳</div><div class="ic-val">${trees}</div><div class="ic-lbl">Baum-Äquivalente</div></div>
-      <div class="impact-card"><div class="ic-emoji">⚡</div><div class="ic-val">${totalProd.toFixed(0)} kWh</div><div class="ic-lbl">Gesamt 14 Tage</div></div>
+      <div class="impact-card"><div class="ic-emoji">💰</div><div class="ic-val">₹${moneySaved}</div><div class="ic-lbl">${this.t('imp.saved14')}</div></div>
+      <div class="impact-card"><div class="ic-emoji">📈</div><div class="ic-val">₹${yearProj}</div><div class="ic-lbl">${this.t('imp.yearProj')}</div></div>
+      <div class="impact-card"><div class="ic-emoji">🌍</div><div class="ic-val">${co2} kg</div><div class="ic-lbl">${this.t('imp.co2')}</div></div>
+      <div class="impact-card"><div class="ic-emoji">⛽</div><div class="ic-val">${dieselLit} L</div><div class="ic-lbl">${this.t('imp.diesel')}</div></div>
+      <div class="impact-card"><div class="ic-emoji">🌳</div><div class="ic-val">${trees}</div><div class="ic-lbl">${this.t('imp.trees')}</div></div>
+      <div class="impact-card"><div class="ic-emoji">⚡</div><div class="ic-val">${totalProd.toFixed(0)} kWh</div><div class="ic-lbl">${this.t('imp.totalDays')}</div></div>
     `;
   },
 
   // ===== MAINTENANCE =====
   async renderMaintTab() {
     const nextDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 12);
+    const loc = this.lang === 'en' ? 'en-US' : 'de-DE';
     document.getElementById('next-maint').innerHTML = `
       <div class="appt-card">
         <div class="appt-date">
           <div class="ad-day">${nextDate.getDate()}</div>
-          <div class="ad-mon">${nextDate.toLocaleDateString('de-DE', { month: 'short' })}</div>
+          <div class="ad-mon">${nextDate.toLocaleDateString(loc, { month: 'short' })}</div>
         </div>
         <div class="appt-body">
-          <div class="appt-title">Halbjährliche Wartung</div>
-          <div class="appt-meta">Panels reinigen, Anschlüsse prüfen, Batterietest</div>
-          <span class="appt-status confirmed">In 12 Tagen</span>
+          <div class="appt-title">${this.t('sys.maintTitle')}</div>
+          <div class="appt-meta">${this.t('sys.maintDesc')}</div>
+          <span class="appt-status confirmed">${this.t('sys.in12days')}</span>
         </div>
       </div>`;
 
     const tasks = [
-      { text: 'Panels reinigen', done: false },
-      { text: 'Batterie-Spannung messen', done: true },
-      { text: 'Kabel auf Korrosion prüfen', done: false },
-      { text: 'Inverter-Lüfter entstauben', done: false },
-      { text: 'Erdung kontrollieren', done: true },
-      { text: 'MCB testen (Probeauslösung)', done: false }
+      { textKey: 'sys.task1', done: false },
+      { textKey: 'sys.task2', done: true },
+      { textKey: 'sys.task3', done: false },
+      { textKey: 'sys.task4', done: false },
+      { textKey: 'sys.task5', done: true },
+      { textKey: 'sys.task6', done: false }
     ];
     document.getElementById('maint-tasks').innerHTML = tasks.map((t,i) => `
       <li onclick="app.toggleMaintTask(${i})">
         <div class="maint-check ${t.done?'done':''}">${t.done ? '✓' : ''}</div>
-        <span style="${t.done?'opacity:0.6;text-decoration:line-through':''}">${this.escapeHtml(t.text)}</span>
+        <span style="${t.done?'opacity:0.6;text-decoration:line-through':''}">${this.escapeHtml(this.t(t.textKey))}</span>
       </li>`).join('');
     this._maintTasks = tasks;
 
@@ -767,8 +838,8 @@ const app = {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M9 11l3 3L22 4l-2-2L12 10 11 9z"/></svg>
         </div>
         <div class="report-details">
-          <div class="report-type">Wartung Q4 2025</div>
-          <div class="report-meta">15.11.2025 · Rajesh Kumar · Alles OK</div>
+          <div class="report-type">${this.t('sys.maintHist1')}</div>
+          <div class="report-meta">${this.t('sys.maintHist1m')}</div>
         </div>
       </div>
       <div class="report-item">
@@ -776,8 +847,8 @@ const app = {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M9 11l3 3L22 4l-2-2L12 10 11 9z"/></svg>
         </div>
         <div class="report-details">
-          <div class="report-type">Panel-Reinigung</div>
-          <div class="report-meta">02.10.2025 · Eigenleistung · 6 Panels</div>
+          <div class="report-type">${this.t('sys.maintHist2')}</div>
+          <div class="report-meta">${this.t('sys.maintHist2m')}</div>
         </div>
       </div>`;
   },
@@ -802,11 +873,11 @@ const app = {
   closeApptModal() { document.getElementById('modal-appointment').classList.add('hidden'); },
 
   async saveAppointment() {
-    const title = document.getElementById('appt-title').value.trim() || 'Termin';
+    const title = document.getElementById('appt-title').value.trim() || this.t('sup.appts');
     const techId = document.getElementById('appt-tech').value;
     const date = document.getElementById('appt-date').value;
     const note = document.getElementById('appt-note').value.trim();
-    if (!date) { this.showToast('Datum wählen'); return; }
+    if (!date) { this.showToast(this.t('mod.dateNeeded')); return; }
     await db.addAppointment({
       id: 'app_' + Date.now(),
       title, techId,
@@ -815,7 +886,7 @@ const app = {
       notes: note
     });
     this.closeApptModal();
-    this.showToast('Termin gespeichert');
+    this.showToast(this.t('mod.apptSaved'));
     await this.loadApptsTab();
     if (this.currentView === 'home') this.loadHome();
   },
@@ -832,15 +903,15 @@ const app = {
       <div class="post-head">
         <div class="post-avatar">${p.avatar || (p.author||'?').charAt(0)}</div>
         <div style="flex:1;min-width:0">
-          <div class="post-author">${this.escapeHtml(p.author)}</div>
+          <div class="post-author">${this.escapeHtml(this.L(p.author))}</div>
           <div class="post-time">${ago}</div>
         </div>
-        ${p.pinned ? '<span class="pinned-badge">📌 Angepinnt</span>' : ''}
+        ${p.pinned ? `<span class="pinned-badge">${this.t('com.pinned')}</span>` : ''}
       </div>
-      <div class="post-body">${this.escapeHtml(p.body)}</div>
+      <div class="post-body">${this.escapeHtml(this.L(p.body))}</div>
       <div class="post-actions">
         <button class="post-action" onclick="app.likePost('${p.id}')">♥ ${p.likes || 0}</button>
-        <button class="post-action">💬 Kommentieren</button>
+        <button class="post-action">${this.t('com.comment')}</button>
       </div>
     </div>`;
   },
@@ -858,16 +929,16 @@ const app = {
   async addPost() {
     const text = document.getElementById('post-input').value.trim();
     if (!text) return;
-    const name = await db.getSetting('community_name') || 'Du';
+    const name = await db.getSetting('community_name') || this.t('com.you');
     await db.addPost({
       id: 'post_' + Date.now(),
-      author: name + ' (Du)',
+      author: name + ' (' + this.t('com.you') + ')',
       avatar: name.charAt(0),
       body: text, createdAt: Date.now(), likes: 0
     });
     document.getElementById('post-input').value = '';
     this.loadCommunity();
-    this.showToast('Beitrag gepostet');
+    this.showToast(this.t('com.posted'));
   },
 
   // ===== LEARNING =====
@@ -878,16 +949,17 @@ const app = {
     const pct = total ? Math.round((done / total) * 100) : 0;
 
     document.getElementById('lp-ring').innerHTML = charts.ring({ value: pct, size: 76, stroke: 7, color: '#1a6b3c' });
-    document.getElementById('lp-text').textContent = `${done} von ${total} Modulen abgeschlossen`;
+    document.getElementById('lp-text').textContent = this.t('lrn.modulesDone', { done, total });
 
     document.getElementById('lesson-list').innerHTML = CONTENT.lessons.map((l, i) => {
       const p = all.find(x => x.lessonId === l.id);
       const isDone = p && p.completed;
+      const levelKey = l.level === 'Anfänger' ? 'lrn.lvl.beg' : 'lrn.lvl.adv';
       return `<div class="lesson-card" onclick="app.startLesson('${l.id}')">
         <div class="lesson-num ${isDone?'done':''}">${isDone ? '✓' : (i+1)}</div>
         <div class="lesson-info">
-          <div class="lesson-title-text">${this.escapeHtml(l.title)}</div>
-          <div class="lesson-meta">${l.level} · ${l.durationMin} Min · ${l.slides.length} Folien + Quiz</div>
+          <div class="lesson-title-text">${this.escapeHtml(this.L(l.title))}</div>
+          <div class="lesson-meta">${this.t(levelKey)} · ${l.durationMin} ${this.lang==='en'?'min':'Min'} · ${l.slides.length} ${this.t('lrn.slides')}</div>
         </div>
         <span class="mi-arrow">›</span>
       </div>`;
@@ -899,14 +971,14 @@ const app = {
     if (!l) return;
     this.lessonId = id;
     this.lessonIndex = 0;
-    document.getElementById('lesson-title').textContent = l.title;
+    document.getElementById('lesson-title').textContent = this.L(l.title);
     this.showView('lesson');
     this.renderLesson();
   },
 
   renderLesson() {
     const l = CONTENT.lessons.find(x => x.id === this.lessonId);
-    const totalSteps = l.slides.length + l.quiz.length + 1; // +1 for completion
+    const totalSteps = l.slides.length + l.quiz.length + 1;
     const pct = Math.min(100, (this.lessonIndex / (totalSteps - 1)) * 100);
     document.getElementById('lp-bar').style.width = pct + '%';
 
@@ -914,11 +986,11 @@ const app = {
       const s = l.slides[this.lessonIndex];
       document.getElementById('lesson-content').innerHTML = `
         <div class="slide">
-          <h3>${this.escapeHtml(s.title)}</h3>
-          <p>${this.escapeHtml(s.body)}</p>
+          <h3>${this.escapeHtml(this.L(s.title))}</h3>
+          <p>${this.escapeHtml(this.L(s.body))}</p>
           <div class="slide-actions">
-            ${this.lessonIndex > 0 ? `<button class="ghost-btn" style="margin-top:0" onclick="app.lessonPrev()">Zurück</button>` : ''}
-            <button class="primary-btn" onclick="app.lessonNext()">Weiter</button>
+            ${this.lessonIndex > 0 ? `<button class="ghost-btn" style="margin-top:0" onclick="app.lessonPrev()">${this.t('lrn.prev')}</button>` : ''}
+            <button class="primary-btn" onclick="app.lessonNext()">${this.t('lrn.next')}</button>
           </div>
         </div>`;
     } else {
@@ -927,20 +999,19 @@ const app = {
         const q = l.quiz[qIdx];
         document.getElementById('lesson-content').innerHTML = `
           <div class="slide">
-            <h3>Quiz ${qIdx + 1} / ${l.quiz.length}</h3>
-            <p style="margin-bottom:16px">${this.escapeHtml(q.q)}</p>
-            ${q.a.map((opt, i) => `<button class="quiz-opt" onclick="app.answerQuiz(${i})">${this.escapeHtml(opt)}</button>`).join('')}
+            <h3>${this.t('lrn.quiz', { n: qIdx + 1, total: l.quiz.length })}</h3>
+            <p style="margin-bottom:16px">${this.escapeHtml(this.L(q.q))}</p>
+            ${q.a.map((opt, i) => `<button class="quiz-opt" onclick="app.answerQuiz(${i})">${this.escapeHtml(this.L(opt))}</button>`).join('')}
           </div>`;
       } else {
-        // completion
         db.setProgress({ lessonId: this.lessonId, completed: true, completedAt: Date.now() });
         document.getElementById('lesson-content').innerHTML = `
           <div class="slide center">
             <div style="font-size:48px;margin-bottom:8px">🎓</div>
-            <h3>Lektion abgeschlossen!</h3>
-            <p>Großartig! Du hast das Modul "${this.escapeHtml(l.title)}" gemeistert.</p>
+            <h3>${this.t('lrn.done')}</h3>
+            <p>${this.t('lrn.doneText', { title: this.escapeHtml(this.L(l.title)) })}</p>
             <div class="slide-actions" style="justify-content:center">
-              <button class="primary-btn" onclick="app.showView('learning')">Zurück zum Lernzentrum</button>
+              <button class="primary-btn" onclick="app.showView('learning')">${this.t('lrn.backToLrn')}</button>
             </div>
           </div>`;
         if (navigator.vibrate) navigator.vibrate([40, 30, 40, 30, 60]);
@@ -968,7 +1039,7 @@ const app = {
   async loadAlerts() {
     const alerts = (await db.getAlerts()).sort((a,b) => b.timestamp - a.timestamp);
     if (!alerts.length) {
-      document.getElementById('alert-list').innerHTML = '<div class="empty-state"><p>Keine Benachrichtigungen.</p></div>';
+      document.getElementById('alert-list').innerHTML = `<div class="empty-state"><p>${this.t('al.empty')}</p></div>`;
       return;
     }
     document.getElementById('alert-list').innerHTML = alerts.map(a => {
@@ -977,11 +1048,11 @@ const app = {
       return `<div class="report-item" onclick="app.ackAlert('${a.id}')">
         <div class="report-icon severity-${sev}" style="font-size:18px">${icon}</div>
         <div class="report-details">
-          <div class="report-type">${this.escapeHtml(a.title)}</div>
-          <div class="report-meta">${this.escapeHtml(a.text)}</div>
+          <div class="report-type">${this.escapeHtml(this.L(a.title))}</div>
+          <div class="report-meta">${this.escapeHtml(this.L(a.text))}</div>
           <div class="report-meta">${this.timeAgo(a.timestamp)}</div>
         </div>
-        ${!a.acknowledged ? '<span class="report-status-badge badge-open">Neu</span>' : ''}
+        ${!a.acknowledged ? `<span class="report-status-badge badge-open">${this.t('al.new')}</span>` : ''}
       </div>`;
     }).join('');
   },
@@ -1022,6 +1093,8 @@ const app = {
       document.getElementById('community-name').textContent = community + (state ? ', ' + state : '');
       const ci = document.getElementById('setting-community');
       if (ci) ci.value = community;
+    } else {
+      document.getElementById('community-name').textContent = this.t('app.community.default');
     }
     if (state) {
       const si = document.getElementById('setting-state');
@@ -1134,7 +1207,6 @@ const app = {
     if (community) await db.setSetting('community_name', community);
     await db.setSetting('state', state);
     await db.setSetting('role', this.selectedRole);
-    await db.setSetting('language', language);
     await db.setSetting('contrast', contrast);
     await db.setSetting('large', large);
 
@@ -1148,9 +1220,14 @@ const app = {
 
     document.body.classList.toggle('contrast', contrast);
     document.body.classList.toggle('large', large);
-    await this.loadSettings();
 
-    this.showToast('Einstellungen gespeichert');
+    if (language !== this.lang) {
+      await this.setLang(language);   // applies + re-renders
+    } else {
+      await this.loadSettings();
+    }
+
+    this.showToast(this.t('set.saved'));
     if (navigator.vibrate) navigator.vibrate(30);
 
     if (owmKey && typeof Weather !== 'undefined') Weather.refresh().then(() => this.loadHome());
@@ -1178,6 +1255,276 @@ const app = {
     console.log(`[sync] ${unsynced.length} reports`);
   },
 
+  // ============================================================
+  // ===== AI ASSISTANT (Surya AI) =====
+  // ============================================================
+  openAi() { this.showView('ai'); },
+
+  async loadChat() {
+    const history = (await db.getChats()).sort((a,b) => a.timestamp - b.timestamp);
+    const container = document.getElementById('chat-messages');
+
+    if (!history.length) {
+      container.innerHTML = `
+        <div class="chat-empty">
+          <div class="ce-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"/><path d="M8 11h.01"/><path d="M16 11h.01"/>
+              <path d="M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/><path d="M12 3v3"/>
+            </svg>
+          </div>
+          <h3>${this.escapeHtml(AI.name)}</h3>
+          <p>${this.escapeHtml(this.L(AI.greeting))}</p>
+        </div>`;
+    } else {
+      container.innerHTML = history.map(m => this.renderBubble(m)).join('');
+    }
+
+    // Suggestions (translated per language)
+    const suggs = AI.suggestionsFor(this.lang);
+    this.renderSuggestions(history.length ? suggs.slice(0,4) : suggs);
+    setTimeout(() => this.scrollChatToBottom(), 30);
+    document.getElementById('chat-input').focus();
+  },
+
+  renderBubble(m) {
+    if (m.role === 'user') {
+      const img = m.imageData ? `<img src="${m.imageData}" class="bubble-image" onclick="app.lightbox('${m.id}')" alt="">` : '';
+      const caption = m.text ? this.escapeHtml(m.text) : (m.imageData ? this.t('ai.photoSent') : '');
+      return `<div class="bubble bubble-user" data-id="${m.id}">${img}${caption ? `<div>${caption}</div>` : ''}</div>`;
+    }
+    // AI bubble — supports basic markdown bold (**text**) → strong
+    const formatted = this.escapeHtml(m.text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    const sources = (m.sources || []).map(s => {
+      const cls = s.type === 'emergency' ? 'source-chip danger' : 'source-chip';
+      return `<button class="${cls}" onclick="app.aiSourceClick('${s.type}','${s.id}')">${this.escapeHtml(s.label)}</button>`;
+    }).join('');
+    const tags = m.visionTags && m.visionTags.length
+      ? `<div class="vision-tags">${m.visionTags.map(t => `<span class="vision-tag">${this.escapeHtml(t)}</span>`).join('')}</div>`
+      : '';
+    return `<div class="bubble bubble-ai ${m.emergency ? 'emergency' : ''}">${formatted}${tags}${sources ? `<div class="bubble-sources">${sources}</div>` : ''}</div>`;
+  },
+
+  lightbox(messageId) {
+    db.getChats().then(all => {
+      const msg = all.find(m => m.id === messageId);
+      if (!msg || !msg.imageData) return;
+      const ex = document.querySelector('.lightbox');
+      if (ex) ex.remove();
+      const lb = document.createElement('div');
+      lb.className = 'lightbox';
+      lb.innerHTML = `<img src="${msg.imageData}" alt="">`;
+      lb.onclick = () => lb.remove();
+      document.body.appendChild(lb);
+    });
+  },
+
+  renderSuggestions(list) {
+    const c = document.getElementById('chat-suggestions');
+    if (!list || !list.length) { c.innerHTML = ''; return; }
+    c.innerHTML = list.map(s => `<button class="sug-chip" onclick="app.chatSendText('${this.escapeAttr(s)}')">${this.escapeHtml(s)}</button>`).join('');
+  },
+
+  chatKey(e) {
+    if (e.key === 'Enter') { e.preventDefault(); this.chatSend(); }
+  },
+
+  _pendingImage: null,
+
+  onChatFile(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { this.showToast(this.t('ai.pickImage')); return; }
+    if (file.size > 5 * 1024 * 1024) { this.showToast(this.t('ai.imageTooBig')); return; }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      // Compress / resize via canvas to keep DB small
+      this.compressImage(ev.target.result, 1024).then(dataUrl => {
+        this._pendingImage = dataUrl;
+        const preview = document.getElementById('chat-preview');
+        const img = document.getElementById('chat-preview-img');
+        img.src = dataUrl;
+        preview.classList.remove('hidden');
+        document.getElementById('chat-input').placeholder = this.t('ai.placeholder.img');
+        document.getElementById('chat-input').focus();
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  },
+
+  compressImage(dataUrl, maxDim) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else       { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = dataUrl;
+    });
+  },
+
+  removePreview() {
+    this._pendingImage = null;
+    document.getElementById('chat-preview').classList.add('hidden');
+    document.getElementById('chat-preview-img').src = '';
+    document.getElementById('chat-input').placeholder = this.t('ai.placeholder');
+  },
+
+  chatSend() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    const image = this._pendingImage;
+    if (!text && !image) return;
+    input.value = '';
+    if (image) {
+      this.chatSendImage(image, text);
+      this.removePreview();
+    } else {
+      this.chatSendText(text);
+    }
+  },
+
+  async chatSendText(text) {
+    const container = document.getElementById('chat-messages');
+    const empty = container.querySelector('.chat-empty');
+    if (empty) container.innerHTML = '';
+
+    const userMsg = { id: 'm_' + Date.now(), role: 'user', text, timestamp: Date.now() };
+    await db.addChat(userMsg);
+    container.insertAdjacentHTML('beforeend', this.renderBubble(userMsg));
+    this.scrollChatToBottom();
+    if (navigator.vibrate) navigator.vibrate(15);
+
+    this.showTyping();
+    const thinking = 600 + Math.random() * 700;
+    setTimeout(async () => {
+      const resp = AI.respond(text);
+      await this.deliverAiResponse(resp, text);
+    }, thinking);
+  },
+
+  async chatSendImage(imageData, text = '') {
+    const container = document.getElementById('chat-messages');
+    const empty = container.querySelector('.chat-empty');
+    if (empty) container.innerHTML = '';
+
+    const userMsg = {
+      id: 'm_' + Date.now(), role: 'user',
+      text, imageData, timestamp: Date.now()
+    };
+    await db.addChat(userMsg);
+    container.insertAdjacentHTML('beforeend', this.renderBubble(userMsg));
+    this.scrollChatToBottom();
+    if (navigator.vibrate) navigator.vibrate(15);
+
+    this.showTyping(this.t('ai.analyzing'));
+
+    try {
+      const analysis = await AI.analyzeImage(imageData);
+      // Longer thinking time for image — feels like "real" vision work
+      const thinking = 1200 + Math.random() * 800;
+      setTimeout(async () => {
+        const resp = AI.describeImage(analysis, text);
+        // Add vision tags for transparency
+        const tagMap = {
+          red_indicator: 'Rote LED', green_indicator: 'Grüne LED', yellow_indicator: 'Warnung gelb',
+          panel_like: 'Solarpanel', possibly_dirty: 'Verschmutzung', device_housing: 'Gerätegehäuse',
+          cable_like: 'Verkabelung', outdoor_sky: 'Außenaufnahme', hazy: 'Diffus/Rauch?',
+          high_contrast_spots: 'Kontrast-Spots', too_dark: 'Zu dunkel', overexposed: 'Überbelichtet',
+          low_contrast: 'Niedriger Kontrast'
+        };
+        const visionTags = analysis.features
+          .map(f => tagMap[f]).filter(Boolean);
+        await this.deliverAiResponse(resp, text || '[Foto]', visionTags);
+      }, thinking);
+    } catch (err) {
+      console.error('Vision error:', err);
+      document.getElementById('typing-indicator')?.remove();
+      await this.deliverAiResponse({
+        text: '😕 Bei der Bildanalyse ist ein Fehler aufgetreten. Bitte versuche es nochmal.',
+        sources: [], emergency: false, escalate: null,
+        quickReplies: ['Anderes Foto', 'In Worten beschreiben']
+      }, text);
+    }
+  },
+
+  showTyping(label) {
+    document.getElementById('chat-suggestions').innerHTML = '';
+    const container = document.getElementById('chat-messages');
+    const old = document.getElementById('typing-indicator');
+    if (old) old.remove();
+    const typingEl = document.createElement('div');
+    typingEl.className = 'typing';
+    typingEl.id = 'typing-indicator';
+    typingEl.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>'
+      + (label ? `<span style="margin-left:8px;font-size:12px;color:var(--text-light)">${this.escapeHtml(label)}…</span>` : '');
+    container.appendChild(typingEl);
+    this.scrollChatToBottom();
+  },
+
+  async deliverAiResponse(resp, userTextForLog, visionTags = []) {
+    const container = document.getElementById('chat-messages');
+    const aiMsg = {
+      id: 'm_' + Date.now() + '_a',
+      role: 'ai',
+      text: resp.text,
+      sources: resp.sources || [],
+      emergency: resp.emergency || false,
+      visionTags,
+      timestamp: Date.now()
+    };
+
+    if (resp.escalate) {
+      const reportId = await this.autoCreateReport(
+        resp.escalate.type,
+        resp.escalate.severity,
+        `Aus KI-Chat: "${(userTextForLog || '').slice(0,80)}"`
+      );
+      aiMsg.sources = [...(aiMsg.sources || []), { type: 'ticket', id: reportId, label: '🎫 Ticket öffnen' }];
+      if (resp.escalate.emergency) {
+        aiMsg.sources.push({ type: 'emergency', id: 'now', label: '⚠ Notfall-Modus' });
+      }
+    }
+
+    await db.addChat(aiMsg);
+    document.getElementById('typing-indicator')?.remove();
+    container.insertAdjacentHTML('beforeend', this.renderBubble(aiMsg));
+    this.scrollChatToBottom();
+    this.renderSuggestions(resp.quickReplies || []);
+    if (navigator.vibrate) navigator.vibrate(20);
+  },
+
+  aiSourceClick(type, id) {
+    if (navigator.vibrate) navigator.vibrate(15);
+    if (type === 'wizard')    return this.startWizard(id);
+    if (type === 'article')   return this.openArticle(id);
+    if (type === 'ticket')    return this.openTicket(id);
+    if (type === 'view')      return this.showView(id);
+    if (type === 'emergency') return this.emergency();
+  },
+
+  async clearChat() {
+    if (!confirm(this.t('ai.clearConfirm'))) return;
+    await db.clearChats();
+    this.loadChat();
+  },
+
+  scrollChatToBottom() {
+    const c = document.getElementById('chat-messages');
+    if (c) c.scrollTop = c.scrollHeight;
+  },
+
+  escapeAttr(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); },
+
   // ===== UTIL =====
   showToast(msg) {
     const t = document.getElementById('toast');
@@ -1196,13 +1543,14 @@ const app = {
   timeAgo(ts) {
     const diff = Date.now() - ts;
     const m = Math.floor(diff / 60000);
-    if (m < 1)  return 'Gerade eben';
-    if (m < 60) return `vor ${m} Min`;
+    if (m < 1)  return this.t('misc.justNow');
+    if (m < 60) return this.t('misc.minAgo', { n: m });
     const h = Math.floor(m / 60);
-    if (h < 24) return `vor ${h} Std`;
+    if (h < 24) return this.t('misc.hAgo', { n: h });
     const d = Math.floor(h / 24);
-    if (d < 7)  return `vor ${d} Tg`;
-    return new Date(ts).toLocaleDateString('de-DE');
+    if (d < 7)  return this.t('misc.dAgo', { n: d });
+    const loc = this.lang === 'en' ? 'en-US' : 'de-DE';
+    return new Date(ts).toLocaleDateString(loc);
   }
 };
 
