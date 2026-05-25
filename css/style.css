@@ -854,6 +854,7 @@ button.nav-btn, button.link-btn, button.tab-pill, button.kb-filter, button.post-
 .sensor-card {
   background: linear-gradient(135deg, #fffbef 0%, #fff5d4 100%);
   border: 1px solid #ffe082;
+  padding: 14px 12px;  /* slightly less than default card to give the grid more room */
 }
 body.theme-dark .sensor-card {
   background: linear-gradient(135deg, #2a2110 0%, #1f1908 100%);
@@ -886,30 +887,43 @@ body.theme-dark .sensor-card {
   color: var(--text-light); font-size: 13px; font-style: italic; padding: 12px 0;
 }
 
-/* Total stats header */
+/* Total stats header — responsive, never overflows */
 .sensor-total {
   display: flex; justify-content: space-between; align-items: flex-end;
-  padding: 6px 4px 12px; border-bottom: 1px solid var(--border);
+  gap: 10px; padding: 6px 2px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
 }
+.st-left { min-width: 0; flex: 1; }
 .st-left .st-watts {
-  font-size: 28px; font-weight: 800; line-height: 1; color: #c87a00;
+  font-size: 26px; font-weight: 800; line-height: 1; color: #c87a00;
   letter-spacing: -0.5px;
+  white-space: nowrap;
 }
 body.theme-dark .st-left .st-watts { color: #FFD54F; }
-.st-left .st-watts .unit { font-size: 14px; font-weight: 600; margin-left: 4px; opacity: 0.75; }
+.st-left .st-watts .unit { font-size: 13px; font-weight: 600; margin-left: 4px; opacity: 0.75; }
 .st-left .st-label { font-size: 11px; color: var(--text-light); margin-top: 4px; }
-.st-right { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.st-right { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0; }
 .st-mini {
-  font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px;
+  font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px;
   background: var(--green-soft); color: var(--green);
+  white-space: nowrap;
 }
 .st-mini.fault { background: var(--red-soft); color: var(--red); }
 
-/* 2x3 panel grid */
+/* Responsive panel grid:
+   - very narrow phones (<360px viewport): 2 cols
+   - regular phones (360-479px): 2 cols of comfortable size
+   - tablets / wide phones (>=480px): 3 cols
+*/
 .panel-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
-@media (max-width: 380px) { .panel-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 480px) {
+  .panel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
 .panel-tile {
   background: var(--card); border: 1px solid var(--border);
@@ -917,6 +931,8 @@ body.theme-dark .st-left .st-watts { color: #FFD54F; }
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   transition: transform 0.15s, border-color 0.2s;
   position: relative;
+  min-width: 0;       /* allow text-overflow inside grid */
+  overflow: hidden;
 }
 body.theme-dark .panel-tile { background: rgba(255,255,255,0.03); }
 .panel-tile.tile-fault     { border-color: var(--red);    background: var(--red-soft); }
@@ -929,24 +945,39 @@ body.theme-dark .panel-tile.tile-excellent { background: #143a26; }
 
 .pt-head {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 4px;
   font-size: 10.5px; font-weight: 700; color: var(--text-light);
   text-transform: uppercase; letter-spacing: 0.3px;
   min-height: 14px;
+  min-width: 0;
 }
-.pt-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.pt-name {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1; min-width: 0;
+}
 .pt-flag {
   font-size: 11px; background: rgba(124,87,194,0.15); color: var(--purple);
-  padding: 1px 4px; border-radius: 4px; flex-shrink: 0; margin-left: 4px;
+  padding: 1px 4px; border-radius: 4px; flex-shrink: 0;
 }
-.pt-ring { margin: 2px 0; }
+.pt-ring { margin: 4px 0 2px; line-height: 0; }
+.pt-ring svg { max-width: 100%; height: auto; }
 .pt-watts {
-  font-size: 16px; font-weight: 800; line-height: 1; color: var(--text);
+  font-size: 18px; font-weight: 800; line-height: 1; color: var(--text);
+  white-space: nowrap;
 }
 .pt-watts .unit { font-size: 11px; opacity: 0.7; margin-left: 2px; font-weight: 600; }
-.pt-watts.fault { font-size: 12px; color: var(--red); }
+.pt-watts.fault { font-size: 12px; color: var(--red); white-space: normal; text-align: center; }
 .pt-tier {
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
-  padding: 2px 6px; border-radius: 6px;
+  padding: 2px 7px; border-radius: 6px;
+  white-space: nowrap;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 3-column layout (tablets+) → slightly smaller ring + watts to fit */
+@media (min-width: 480px) {
+  .pt-watts { font-size: 16px; }
+  .panel-tile { padding: 10px 6px; }
 }
 .pt-tier.excellent, .pt-tier.good { color: var(--green); background: rgba(46,158,94,0.12); }
 .pt-tier.low      { color: var(--orange); background: rgba(251,140,0,0.12); }
