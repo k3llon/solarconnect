@@ -70,20 +70,6 @@ const I18N = {
   'home.noAppt':         { de: 'Kein anstehender Termin', en: 'No upcoming appointment', hi: 'कोई आगामी नियुक्ति नहीं', ta: 'வரவிருக்கும் சந்திப்பு இல்லை', bn: 'কোনো আসন্ন অ্যাপয়েন্টমেন্ট নেই', te: 'రాబోయే అపాయింట్‌మెంట్ లేదు' },
 
   // ===== AI CTA =====
-  'ai.askSurya':         { de: 'Frag Surya AI', en: 'Ask Surya AI', hi: 'सूर्या AI से पूछें', ta: 'சூர்யா AI-ஐ கேள்', bn: 'সূর্য AI-কে জিজ্ঞাসা করুন', te: 'సూర్య AIని అడగండి' },
-  'ai.ctaSubHome':       { de: 'KI-Assistentin für Solar-Probleme — antwortet sofort', en: 'AI assistant for solar issues — instant answers', hi: 'सौर समस्याओं के लिए AI सहायक — तत्काल उत्तर', ta: 'சூரிய பிரச்சினைகளுக்கான AI உதவியாளர் — உடனடி பதில்கள்', bn: 'সৌর সমস্যার জন্য AI সহায়ক — তাৎক্ষণিক উত্তর', te: 'సౌర సమస్యల కోసం AI సహాయకుడు — తక్షణ సమాధానాలు' },
-  'ai.ctaSubHelp':       { de: 'Beschreibe dein Problem in eigenen Worten', en: 'Describe your problem in your own words', hi: 'अपनी समस्या को अपने शब्दों में बताएँ', ta: 'உங்கள் சொற்களில் பிரச்சினையை விவரிக்கவும்', bn: 'আপনার সমস্যা নিজের ভাষায় বর্ণনা করুন', te: 'మీ సమస్యను మీ స్వంత మాటల్లో వివరించండి' },
-  'ai.new':              { de: 'NEU', en: 'NEW', hi: 'नया', ta: 'புதிய', bn: 'নতুন', te: 'కొత్త' },
-  'ai.hint.title':       { de: 'Erst die KI fragen?', en: 'Ask the AI first?', hi: 'पहले AI से पूछें?', ta: 'முதலில் AI-ஐ கேக்கணுமா?', bn: 'প্রথমে AI-কে জিজ্ঞাসা করবেন?', te: 'మొదట AIని అడగండి?' },
-  'ai.hint.sub':         { de: 'Vielleicht löst Surya AI dein Problem in Sekunden.', en: 'Surya AI might solve it in seconds.', hi: 'सूर्या AI शायद कुछ ही सेकंड में हल कर दे।', ta: 'சூர்யா AI விநாடிகளில் தீர்க்கலாம்.', bn: 'সূর্য AI সম্ভবত সেকেন্ডে সমাধান করবে।', te: 'సూర్య AI సెకన్లలో పరిష్కరించవచ్చు.' },
-  'ai.placeholder':      { de: 'Frag Surya AI...', en: 'Ask Surya AI...', hi: 'सूर्या AI से पूछें...', ta: 'சூர்யா AI-ஐ கேள்...', bn: 'সূর্য AI-কে জিজ্ঞাসা করুন...', te: 'సూర్య AIని అడగండి...' },
-  'ai.placeholder.img':  { de: 'Beschreibung (optional)...', en: 'Description (optional)...', hi: 'विवरण (वैकल्पिक)...', ta: 'விளக்கம் (விருப்பம்)...', bn: 'বিবরণ (ঐচ্ছিক)...', te: 'వివరణ (ఐచ్ఛికం)...' },
-  'ai.status':           { de: 'Online · Offline-fähig', en: 'Online · Offline-capable', hi: 'ऑनलाइन · ऑफ़लाइन सक्षम', ta: 'ஆன்லைன் · ஆஃப்லைன் திறன்', bn: 'অনলাইন · অফলাইন-সক্ষম', te: 'ఆన్‌లైన్ · ఆఫ్‌లైన్ సామర్థ్యం' },
-  'ai.analyzing':        { de: 'Analysiere Bild', en: 'Analyzing image', hi: 'छवि का विश्लेषण कर रहा हूँ', ta: 'படத்தை பகுப்பாய்வு செய்கிறது', bn: 'ছবি বিশ্লেষণ করছি', te: 'చిత్రాన్ని విశ్లేషిస్తోంది' },
-  'ai.clearConfirm':     { de: 'Chat-Verlauf löschen?', en: 'Clear chat history?', hi: 'चैट इतिहास हटाएँ?', ta: 'அரட்டை வரலாற்றை அழிக்கவா?', bn: 'চ্যাট ইতিহাস মুছবেন?', te: 'చాట్ చరిత్రను తొలగించాలా?' },
-  'ai.photoSent':        { de: '📷 Foto gesendet', en: '📷 Photo sent', hi: '📷 फोटो भेजा गया', ta: '📷 புகைப்படம் அனுப்பப்பட்டது', bn: '📷 ছবি পাঠানো হয়েছে', te: '📷 ఫోటో పంపబడింది' },
-  'ai.imageTooBig':      { de: 'Bild zu groß (max 5 MB)', en: 'Image too large (max 5 MB)', hi: 'छवि बहुत बड़ी (अधिकतम 5 MB)', ta: 'படம் மிகப் பெரியது (அதிகபட்சம் 5 MB)', bn: 'ছবি খুব বড় (সর্বোচ্চ 5 MB)', te: 'చిత్రం చాలా పెద్దది (గరిష్ఠం 5 MB)' },
-  'ai.pickImage':        { de: 'Bitte ein Bild auswählen', en: 'Please choose an image', hi: 'कृपया एक छवि चुनें', ta: 'படத்தைத் தேர்ந்தெடுக்கவும்', bn: 'অনুগ্রহ করে একটি ছবি বেছে নিন', te: 'దయచేసి చిత్రాన్ని ఎంచుకోండి' },
 
   // ===== SELF-HELP =====
   'sh.title':            { de: 'Selbsthilfe', en: 'Self-Help', hi: 'स्व-सहायता', ta: 'சுய உதவி', bn: 'স্ব-সহায়তা', te: 'స్వీయ సహాయం' },
@@ -271,8 +257,6 @@ const I18N = {
 
   // ===== MORE menu =====
   'more.title':      { de: 'Mehr', en: 'More', hi: 'और', ta: 'மேலும்', bn: 'আরও', te: 'మరిన్ని' },
-  'more.aiTitle':    { de: 'Surya AI', en: 'Surya AI', hi: 'सूर्या AI', ta: 'சூர்யா AI', bn: 'সূর্য AI', te: 'సూర్య AI' },
-  'more.aiSub':      { de: 'KI-Assistentin im Chat', en: 'AI assistant chat', hi: 'AI सहायक चैट', ta: 'AI உதவியாளர் அரட்டை', bn: 'AI সহায়ক চ্যাট', te: 'AI సహాయక చాట్' },
   'more.forumTitle': { de: 'Gemeinde-Forum', en: 'Community forum', hi: 'समुदाय फ़ोरम', ta: 'சமூக மன்றம்', bn: 'সম্প্রদায় ফোরাম', te: 'సమాజ ఫోరమ్' },
   'more.forumSub':   { de: 'Austausch mit Nachbarn', en: 'Connect with neighbors', hi: 'पड़ोसियों के साथ संवाद', ta: 'அயலவர்களுடன் இணை', bn: 'প্রতিবেশীদের সাথে যোগাযোগ', te: 'పొరుగువారితో కనెక్ట్' },
   'more.lrnTitle':   { de: 'Lernzentrum', en: 'Learning center', hi: 'सीखने का केंद्र', ta: 'கற்றல் மையம்', bn: 'শেখার কেন্দ্র', te: 'అభ్యాస కేంద్రం' },

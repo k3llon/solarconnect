@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solarconnect-v8';
+const CACHE_NAME = 'solarconnect-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -6,9 +6,10 @@ const ASSETS = [
   './js/i18n.js',
   './js/content.js',
   './js/charts.js',
-  './js/ai.js',
   './js/sensor.js',
   './js/db.js',
+  './js/weather.js',
+  './js/claude.js',
   './js/app.js',
   './manifest.json',
   './icons/favicon.svg'

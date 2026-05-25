@@ -212,22 +212,6 @@
         </div>
       </div>
 
-      <!-- AI Assistant CTA -->
-      <button class="ai-cta" onclick="app.openAi()">
-        <div class="ai-avatar">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="9"/>
-            <path d="M8 11h.01"/><path d="M16 11h.01"/>
-            <path d="M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/>
-            <path d="M12 3v3"/>
-          </svg>
-        </div>
-        <div class="ai-text">
-          <div class="ai-title"><span data-i18n="ai.askSurya">Frag Surya AI</span> <span class="ai-badge" data-i18n="ai.new">NEU</span></div>
-          <div class="ai-sub" data-i18n="ai.ctaSubHome">KI-Assistentin für Solar-Probleme — antwortet sofort</div>
-        </div>
-        <span class="ai-arrow">→</span>
-      </button>
 
       <!-- Quick Actions -->
       <div class="section-title" data-i18n="home.quickActions">Schnellaktionen</div>
@@ -276,72 +260,12 @@
         <p class="subtitle" data-i18n="sh.subtitle">Häufige Probleme Schritt für Schritt selbst lösen.</p>
       </header>
 
-      <button class="ai-cta ai-cta-large" onclick="app.openAi()">
-        <div class="ai-avatar ai-avatar-lg">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="9"/>
-            <path d="M8 11h.01"/><path d="M16 11h.01"/>
-            <path d="M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/>
-            <path d="M12 3v3"/>
-          </svg>
-        </div>
-        <div class="ai-text">
-          <div class="ai-title" data-i18n="ai.askSurya">Frag Surya AI</div>
-          <div class="ai-sub" data-i18n="ai.ctaSubHelp">Beschreibe dein Problem in eigenen Worten</div>
-        </div>
-        <span class="ai-arrow">→</span>
-      </button>
-
       <div class="section-title" data-i18n="sh.guided">Geführte Diagnose</div>
       <div class="wizard-grid" id="wizard-grid"></div>
 
       <div class="section-title" data-i18n="sh.articles">Wissensartikel</div>
       <div class="kb-filters" id="kb-filters"></div>
       <div class="kb-list" id="kb-list"></div>
-    </div>
-
-    <!-- ===== AI CHAT ===== -->
-    <div id="view-ai" class="view">
-      <header class="ai-header">
-        <button class="back-btn" onclick="app.showView('home')">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
-        <div class="ai-header-avatar">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="9"/><path d="M8 11h.01"/><path d="M16 11h.01"/><path d="M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/><path d="M12 3v3"/>
-          </svg>
-        </div>
-        <div class="ai-header-info">
-          <div class="ai-header-name">Surya AI</div>
-          <div class="ai-header-status"><span class="ai-online-dot"></span> <span data-i18n="ai.status">Online · Offline-fähig</span></div>
-        </div>
-        <button class="icon-btn" onclick="app.clearChat()" aria-label="Chat löschen">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
-        </button>
-      </header>
-
-      <div id="chat-messages" class="chat-messages"></div>
-
-      <div id="chat-suggestions" class="chat-suggestions"></div>
-
-      <div id="chat-preview" class="chat-preview hidden">
-        <img id="chat-preview-img" alt="Vorschau">
-        <button class="preview-remove" onclick="app.removePreview()" aria-label="Entfernen">×</button>
-      </div>
-
-      <div class="chat-input-row">
-        <label class="chat-attach" for="chat-file" aria-label="Foto anhängen">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-        </label>
-        <input type="file" id="chat-file" accept="image/*" capture="environment" onchange="app.onChatFile(event)" hidden>
-        <input type="text" id="chat-input" placeholder="Frag Surya AI..." data-i18n-ph="ai.placeholder" onkeydown="app.chatKey(event)">
-        <button class="chat-send" onclick="app.chatSend()" aria-label="Senden">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
-        </button>
-      </div>
     </div>
 
     <!-- ===== WIZARD ===== -->
@@ -481,13 +405,6 @@
       </header>
 
       <div class="menu-list">
-        <button class="menu-item menu-item-ai" onclick="app.openAi()">
-          <div class="mi-icon mi-ai">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 11h.01"/><path d="M16 11h.01"/><path d="M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/><path d="M12 3v3"/></svg>
-          </div>
-          <div class="mi-text"><div class="mi-title"><span data-i18n="more.aiTitle">Surya AI</span> <span class="ai-badge" data-i18n="ai.new">NEU</span></div><div class="mi-sub" data-i18n="more.aiSub">KI-Assistentin im Chat</div></div>
-          <span class="mi-arrow">›</span>
-        </button>
         <button class="menu-item" onclick="app.showView('community')">
           <div class="mi-icon mi-blue">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -635,15 +552,6 @@
       </header>
 
       <div class="report-form">
-        <div class="ai-hint" onclick="app.openAi()">
-          <span class="ai-hint-icon">✨</span>
-          <div>
-            <strong data-i18n="ai.hint.title">Erst die KI fragen?</strong><br>
-            <span class="muted" data-i18n="ai.hint.sub">Vielleicht löst Surya AI dein Problem in Sekunden.</span>
-          </div>
-          <span class="ai-arrow">→</span>
-        </div>
-
         <p class="form-hint" data-i18n="rep.what">Was ist das Problem?</p>
         <div class="problem-grid">
           <button class="problem-btn" data-type="power_outage"   onclick="app.selectProblem(this)"><svg width="36" height="36" viewBox="0 0 24 24" fill="#e53935"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span data-i18n="prob.power_outage">Kein Strom</span></button>
@@ -898,7 +806,6 @@
   <script src="js/i18n.js"></script>
   <script src="js/content.js"></script>
   <script src="js/charts.js"></script>
-  <script src="js/ai.js"></script>
   <script src="js/db.js"></script>
   <script src="js/sensor.js"></script>
   <script src="js/weather.js"></script>
