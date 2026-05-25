@@ -330,6 +330,26 @@ const I18N = {
   'misc.hAgo':       { de: 'vor {n} Std', en: '{n} h ago', hi: '{n} घंटे पहले', ta: '{n} மணி முன்', bn: '{n} ঘণ্টা আগে', te: '{n} గం క్రితం' },
   'misc.dAgo':       { de: 'vor {n} Tg', en: '{n} d ago', hi: '{n} दिन पहले', ta: '{n} நாள் முன்', bn: '{n} দিন আগে', te: '{n} రో క్రితం' },
 
+  // ===== LIVE SENSOR =====
+  'sensor.title':       { de: 'Live-Solarpanel', en: 'Live solar panel', hi: 'लाइव सोलर पैनल', ta: 'நேரடி சோலார் பேனல்', bn: 'লাইভ সোলার প্যানেল', te: 'లైవ్ సోలార్ ప్యానెల్' },
+  'sensor.live':        { de: 'LIVE', en: 'LIVE', hi: 'लाइव', ta: 'நேரடி', bn: 'লাইভ', te: 'లైవ్' },
+  'sensor.loading':     { de: 'Verbinde mit Sensor…', en: 'Connecting to sensor…', hi: 'सेंसर से कनेक्ट…', ta: 'சென்சருடன் இணைகிறது…', bn: 'সেন্সরে সংযোগ…', te: 'సెన్సర్‌కు కనెక్ట్…' },
+  'sensor.currentProd': { de: 'Aktuelle Erzeugung', en: 'Current production', hi: 'वर्तमान उत्पादन', ta: 'தற்போதைய உற்பத்தி', bn: 'বর্তমান উৎপাদন', te: 'ప్రస్తుత ఉత్పత్తి' },
+  'sensor.raw':         { de: 'Sensorwert', en: 'Raw value', hi: 'सेंसर मान', ta: 'மூல மதிப்பு', bn: 'কাঁচা মান', te: 'ముడి విలువ' },
+  'sensor.updated':     { de: 'Aktualisiert', en: 'Updated', hi: 'अपडेट', ta: 'புதுப்பிக்கப்பட்டது', bn: 'আপডেট', te: 'నవీకరించబడింది' },
+  'sensor.refresh':     { de: 'Aktualisieren', en: 'Refresh', hi: 'रिफ्रेश', ta: 'புதுப்பி', bn: 'রিফ্রেশ', te: 'రిఫ్రెష్' },
+  'sensor.refreshed':   { de: 'Sensor aktualisiert', en: 'Sensor refreshed', hi: 'सेंसर रिफ्रेश', ta: 'சென்சர் புதுப்பிக்கப்பட்டது', bn: 'সেন্সর রিফ্রেশ', te: 'సెన్సర్ రిఫ్రెష్' },
+  'sensor.error':       { de: 'Sensor-Fehler', en: 'Sensor error', hi: 'सेंसर त्रुटि', ta: 'சென்சர் பிழை', bn: 'সেন্সর ত্রুটি', te: 'సెన్సర్ లోపం' },
+  'sensor.fault':       { de: 'Solar-Panel defekt', en: 'Solar panel faulty', hi: 'सोलर पैनल खराब', ta: 'சோலார் பேனல் கோளாறு', bn: 'সোলার প্যানেল ত্রুটিপূর্ণ', te: 'సోలార్ ప్యానెల్ లోపభూయిష్టం' },
+  'sensor.faultDetail': { de: 'Sensor liefert ungültigen Wert ({v}) — Panel oder Verkabelung prüfen', en: 'Sensor reports invalid value ({v}) — check panel or wiring', hi: 'सेंसर अमान्य मान ({v}) — पैनल/तार जाँचें', ta: 'சென்சர் தவறான மதிப்பு ({v}) — பேனல்/கம்பி சரிபார்', bn: 'সেন্সর অবৈধ মান ({v}) — প্যানেল/তার চেক', te: 'సెన్సర్ చెల్లని విలువ ({v}) — ప్యానెల్/వైరింగ్ తనిఖీ' },
+  'sensor.faultBadge':  { de: 'WARTUNG NÖTIG', en: 'NEEDS SERVICE', hi: 'सेवा आवश्यक', ta: 'சேவை தேவை', bn: 'সেবা প্রয়োজন', te: 'సేవ అవసరం' },
+  'sensor.tier.excellent': { de: 'Volle Leistung', en: 'Full power', hi: 'पूर्ण शक्ति', ta: 'முழு சக்தி', bn: 'পূর্ণ শক্তি', te: 'పూర్తి శక్తి' },
+  'sensor.tier.good':      { de: 'Gute Leistung', en: 'Good output', hi: 'अच्छा उत्पादन', ta: 'நல்ல வெளியீடு', bn: 'ভালো আউটপুট', te: 'మంచి అవుట్‌పుట్' },
+  'sensor.tier.low':       { de: 'Geringe Leistung', en: 'Low output', hi: 'कम उत्पादन', ta: 'குறைந்த வெளியீடு', bn: 'কম আউটপুট', te: 'తక్కువ అవుట్‌పుట్' },
+  'sensor.tier.idle':      { de: 'Sehr dunkel / Nacht', en: 'Very dark / night', hi: 'बहुत अंधेरा / रात', ta: 'மிக இருட்டு / இரவு', bn: 'খুব অন্ধকার / রাত', te: 'చాలా చీకటి / రాత్రి' },
+  'sensor.alertTitle':  { de: 'Panel-Sensor meldet Defekt', en: 'Panel sensor reports fault', hi: 'पैनल सेंसर त्रुटि', ta: 'பேனல் சென்சர் கோளாறு', bn: 'প্যানেল সেন্সর ত্রুটি', te: 'ప్యానెల్ సెన్సర్ లోపం' },
+  'sensor.alertText':   { de: 'Wert {v} liegt unter dem Schwellwert. Bitte Panel und Verkabelung prüfen.', en: 'Value {v} below threshold. Check panel and wiring.', hi: 'मान {v} सीमा से कम। पैनल और तार जाँचें।', ta: 'மதிப்பு {v} வரம்புக்கு கீழ். பேனல்/கம்பி சரிபார்.', bn: 'মান {v} সীমার নিচে। প্যানেল ও তার চেক।', te: 'విలువ {v} ప్రవేశం కింద. ప్యానెల్ & వైరింగ్ తనిఖీ.' },
+
   // ===== WEATHER day names =====
   'wd.today':  { de: 'Heute',     en: 'Today',  hi: 'आज',        ta: 'இன்று',  bn: 'আজ',    te: 'ఈరోజు' },
   'wd.tom':    { de: 'Morgen',    en: 'Tomorrow', hi: 'कल',      ta: 'நாளை',   bn: 'কাল',   te: 'రేపు' },

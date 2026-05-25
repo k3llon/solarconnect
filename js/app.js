@@ -186,6 +186,12 @@ const app = {
     };
     if (loaders[name] && this[loaders[name]]) this[loaders[name]]();
     if (name === 'claude' && typeof Claude !== 'undefined') Claude.init();
+
+    // Live-Sensor polling: only on home
+    if (typeof SENSOR !== 'undefined') {
+      if (name === 'home') this.startSensor();
+      else SENSOR.stop();
+    }
     window.scrollTo(0, 0);
   },
 
@@ -1524,6 +1530,116 @@ const app = {
   },
 
   escapeAttr(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); },
+
+  // ============================================================
+  // ===== LIVE SENSOR (ThingSpeak) =====
+  // ============================================================
+  _sensorFaultAlertSent: false,
+
+  startSensor() {
+    if (typeof SENSOR === 'undefined') return;
+    SENSOR.start((data, err) => {
+      if (err && !data) { this.renderSensorError(err); return; }
+      this.renderSensor(data);
+      this.checkSensorAlert(data);
+    });
+  },
+
+  async refreshSensor() {
+    if (typeof SENSOR === 'undefined') return;
+    const body = document.getElementById('sensor-body');
+    if (body) body.style.opacity = '0.5';
+    try {
+      const data = await SENSOR.fetchLatest();
+      this.renderSensor(data);
+      this.checkSensorAlert(data);
+      this.showToast(this.t('sensor.refreshed'));
+    } catch (e) {
+      this.renderSensorError(e);
+    } finally {
+      if (body) body.style.opacity = '1';
+    }
+  },
+
+  renderSensor(data) {
+    const body  = document.getElementById('sensor-body');
+    const spark = document.getElementById('sensor-spark');
+    const meta  = document.getElementById('sensor-meta');
+    if (!body) return;
+
+    if (data.status === 'fault') {
+      body.innerHTML = `
+        <div class="sensor-info">
+          <div class="sensor-watts fault">⚠ ${this.t('sensor.fault')}</div>
+          <div class="sensor-label">${this.t('sensor.faultDetail', { v: data.value ?? '—' })}</div>
+          <span class="sensor-status-pill fault">${this.t('sensor.faultBadge')}</span>
+        </div>`;
+    } else {
+      const ringColor = data.status === 'excellent' ? '#1a6b3c'
+                      : data.status === 'good'      ? '#2e9e5e'
+                      : data.status === 'low'       ? '#FB8C00' : '#9e9e9e';
+      const statusLabel = this.t('sensor.tier.' + data.status);
+      body.innerHTML = `
+        <div class="sensor-ring">
+          ${charts.ring({ value: data.percent, size: 86, stroke: 8, color: ringColor, track: 'rgba(0,0,0,0.06)' })}
+        </div>
+        <div class="sensor-info">
+          <div class="sensor-watts${data.status==='idle'?' idle':''}">${data.watts}<span class="unit">W</span></div>
+          <div class="sensor-label">${this.t('sensor.currentProd')}</div>
+          <span class="sensor-status-pill ${data.status}">${statusLabel}</span>
+        </div>`;
+    }
+
+    if (spark && data.history && data.history.length > 1) {
+      spark.innerHTML = charts.line({
+        data: data.history,
+        height: 50, max: SENSOR.PEAK_WATTS, min: 0,
+        color: data.status === 'fault' ? '#e53935' : '#FFB300', fill: true
+      });
+    } else if (spark) {
+      spark.innerHTML = '';
+    }
+
+    if (meta) {
+      const ago  = this.timeAgo(data.timestamp);
+      const raw  = data.value != null ? data.value : '—';
+      meta.innerHTML = `
+        <span>${this.t('sensor.raw')}: <strong>${raw}</strong></span>
+        <span>${this.t('sensor.updated')}: ${ago}</span>`;
+    }
+  },
+
+  renderSensorError(err) {
+    const body = document.getElementById('sensor-body');
+    if (!body) return;
+    body.innerHTML = `<div class="sensor-loading" style="color:var(--red)">⚠ ${this.t('sensor.error')}: ${this.escapeHtml(err.message || 'Network')}</div>`;
+  },
+
+  async checkSensorAlert(data) {
+    if (!data) return;
+    if (data.status === 'fault') {
+      if (this._sensorFaultAlertSent) return;
+      this._sensorFaultAlertSent = true;
+      const existing = await db.getAlerts();
+      if (existing.find(a => a.id === 'sensor_fault')) return;
+      await db.addAlert({
+        id: 'sensor_fault',
+        type: 'error',
+        title: this.t('sensor.alertTitle'),
+        text:  this.t('sensor.alertText', { v: data.value ?? '?' }),
+        timestamp: Date.now(),
+        acknowledged: false
+      });
+      const cnt = document.getElementById('alert-count');
+      if (cnt) {
+        cnt.textContent = (parseInt(cnt.textContent || '0', 10) + 1).toString();
+        cnt.style.display = 'block';
+      }
+    } else {
+      // reset latch so a new fault can trigger again later
+      this._sensorFaultAlertSent = false;
+    }
+  },
 
   // ===== UTIL =====
   showToast(msg) {

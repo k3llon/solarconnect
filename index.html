@@ -133,6 +133,22 @@
         </div>
       </div>
 
+      <!-- Live Sensor (ThingSpeak — virtuelles Solarpanel) -->
+      <div class="card sensor-card" id="sensor-card">
+        <div class="sensor-head">
+          <div class="sensor-title-row">
+            <span class="live-pulse"><span class="live-dot"></span><span data-i18n="sensor.live">LIVE</span></span>
+            <h3 data-i18n="sensor.title">Live-Solarpanel</h3>
+          </div>
+          <button class="link-btn sensor-refresh-btn" onclick="app.refreshSensor()" aria-label="Refresh" title="Aktualisieren">↻</button>
+        </div>
+        <div class="sensor-body" id="sensor-body">
+          <div class="sensor-loading" data-i18n="sensor.loading">Verbinde mit Sensor…</div>
+        </div>
+        <div class="sensor-spark" id="sensor-spark"></div>
+        <div class="sensor-meta" id="sensor-meta"></div>
+      </div>
+
       <!-- Weather + Solar forecast -->
       <div class="card weather-card">
         <div class="weather-now">
@@ -884,6 +900,7 @@
   <script src="js/charts.js"></script>
   <script src="js/ai.js"></script>
   <script src="js/db.js"></script>
+  <script src="js/sensor.js"></script>
   <script src="js/weather.js"></script>
   <script src="js/claude.js"></script>
   <script src="js/app.js"></script>

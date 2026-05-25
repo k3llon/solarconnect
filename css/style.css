@@ -849,6 +849,68 @@ button, a { min-height: 44px; }
 button.nav-btn, button.link-btn, button.tab-pill, button.kb-filter, button.post-action { min-height: auto; }
 
 /* ============================================================
+   LIVE SENSOR CARD (ThingSpeak)
+   ============================================================ */
+.sensor-card {
+  background: linear-gradient(135deg, #fffbef 0%, #fff5d4 100%);
+  border: 1px solid #ffe082;
+}
+body.theme-dark .sensor-card {
+  background: linear-gradient(135deg, #2a2110 0%, #1f1908 100%);
+  border-color: #5a4a16;
+}
+.sensor-head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.sensor-title-row { display: flex; align-items: center; gap: 10px; }
+.sensor-title-row h3 { font-size: 15px; font-weight: 700; }
+.sensor-refresh-btn { font-size: 16px; color: var(--text-light); }
+
+.live-pulse {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--red); color: white;
+  padding: 3px 8px; border-radius: 10px;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.5px;
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: white;
+  animation: livePulse 1.4s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0.7); }
+  50%      { opacity: 0.6; box-shadow: 0 0 0 4px rgba(255,255,255,0); }
+}
+
+.sensor-body { display: flex; align-items: center; gap: 16px; }
+.sensor-loading {
+  color: var(--text-light); font-size: 13px; font-style: italic; padding: 12px 0;
+}
+.sensor-info { flex: 1; min-width: 0; }
+.sensor-watts {
+  font-size: 30px; font-weight: 800; line-height: 1;
+  color: #c87a00; letter-spacing: -0.5px;
+}
+body.theme-dark .sensor-watts { color: #FFD54F; }
+.sensor-watts.fault { color: var(--red); font-size: 22px; }
+.sensor-watts.idle  { color: var(--text-light); }
+.sensor-watts .unit { font-size: 14px; font-weight: 600; margin-left: 4px; opacity: 0.75; }
+.sensor-label { font-size: 11px; color: var(--text-light); margin-top: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.sensor-status-pill {
+  display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 10px; margin-top: 6px;
+}
+.sensor-status-pill.excellent { background: var(--green-soft); color: var(--green); }
+.sensor-status-pill.good      { background: var(--green-soft); color: var(--green); }
+.sensor-status-pill.low       { background: var(--orange-soft); color: var(--orange); }
+.sensor-status-pill.idle      { background: var(--bg-alt);     color: var(--text-light); }
+.sensor-status-pill.fault     { background: var(--red-soft);    color: var(--red); animation: livePulse 1.2s ease-in-out infinite; }
+
+.sensor-spark { margin-top: 10px; }
+.sensor-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--text-muted); margin-top: 6px;
+}
+
+/* ============================================================
    AI ASSISTANT (Surya AI)
    ============================================================ */
 
