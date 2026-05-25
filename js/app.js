@@ -129,7 +129,6 @@ const app = {
       for (const p of CONTENT.posts)       await db.addPost(p);
       for (const a of CONTENT.appointments)await db.addAppointment(a);
       for (const log of CONTENT.generateEnergyHistory(14)) await db.addEnergyLog(log);
-      // a few default alerts
       await db.addAlert({ id: 'a_1', type: 'info', title: 'Monsun-Saison naht',
         text: 'Plane die Vor-Monsun-Inspektion in den nächsten 2 Wochen.',
         timestamp: Date.now() - 1000*60*60*5, acknowledged: false });
@@ -140,6 +139,11 @@ const app = {
         text: '"Monsun-Vorbereitung" ist jetzt in der Wissensdatenbank verfügbar.',
         timestamp: Date.now() - 1000*60*60*72, acknowledged: false });
       await db.setSetting('seeded', true);
+    }
+    // Community tickets — idempotent seed (uses fixed IDs so re-runs overwrite)
+    if (!(await db.getSetting('seeded_community_tickets'))) {
+      for (const t of (CONTENT.communityTickets || [])) await db.addReport(t);
+      await db.setSetting('seeded_community_tickets', true);
     }
   },
 
@@ -265,8 +269,8 @@ const app = {
       ? this.renderApptCard(nextAppt, await db.getTechnicians())
       : `<div class="empty-state"><p>${this.t('home.noAppt')}</p></div>`;
 
-    // recent reports
-    const recent = reports.sort((a,b) => b.timestamp - a.timestamp).slice(0,3);
+    // recent reports — staff sees role-filtered (priority order), users see latest
+    const recent = this.filterTicketsForRole(reports).slice(0, 3);
     document.getElementById('recent-reports').innerHTML = recent.length
       ? recent.map(r => this.renderReportItem(r)).join('')
       : `<div class="empty-state"><p>${this.t('home.noReports')}</p></div>`;
@@ -301,15 +305,33 @@ const app = {
 
   renderReportItem(r) {
     const d = new Date(r.timestamp);
-    const loc = this.lang === 'en' ? 'en-US' : 'de-DE';
-    const time = d.toLocaleDateString(loc, { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
-    return `<div class="report-item" onclick="app.openTicket('${r.id}')">
+    const ago = this.timeAgo(r.timestamp);
+    const noteStr = this.L(r.note);
+    const reporter = r.reporter;
+
+    // For staff: show reporter prominently. For users: just time + note.
+    const showReporter = this.isStaff() && reporter;
+    const reporterBadge = showReporter
+      ? `<div class="report-reporter">
+           <span class="report-avatar">${this.escapeHtml(reporter.avatar || reporter.name?.charAt(0) || '?')}</span>
+           <span><strong>${this.escapeHtml(reporter.name)}</strong> · ${this.escapeHtml(reporter.ward || '')}</span>
+         </div>`
+      : '';
+    const meta = showReporter
+      ? `${ago}${noteStr ? ' · ' + this.escapeHtml(noteStr.slice(0,60)) : ''}`
+      : `${ago}${noteStr ? ' · ' + this.escapeHtml(noteStr.slice(0,40)) : ''}`;
+
+    const sourceTag = r.source === 'community' && !this.isStaff()
+      ? `<span class="src-tag src-community">${this.t('tic.community')}</span>` : '';
+
+    return `<div class="report-item ${r.source==='community'?'is-community':''}" onclick="app.openTicket('${r.id}')">
       <div class="report-icon severity-${r.severity}">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       </div>
       <div class="report-details">
-        <div class="report-type">${this.problemLabels[r.type] || r.type}</div>
-        <div class="report-meta">${time}${r.note ? ' · ' + this.escapeHtml(r.note.slice(0,40)) : ''}</div>
+        <div class="report-type">${this.problemLabels[r.type] || r.type} ${sourceTag}</div>
+        <div class="report-meta">${meta}</div>
+        ${reporterBadge}
       </div>
       <span class="report-status-badge badge-${r.status}">${this.statusLabels[r.status]}</span>
     </div>`;
@@ -467,10 +489,11 @@ const app = {
   },
 
   async loadTicketsTab() {
-    const reports = (await db.getReports()).sort((a,b) => b.timestamp - a.timestamp);
-    document.getElementById('tic-open').textContent = reports.filter(r => r.status === 'open').length;
-    document.getElementById('tic-prog').textContent = reports.filter(r => r.status === 'progress').length;
-    document.getElementById('tic-done').textContent = reports.filter(r => r.status === 'resolved').length;
+    const all = await db.getReports();
+    const reports = this.filterTicketsForRole(all);
+    document.getElementById('tic-open').textContent = all.filter(r => r.status === 'open').length;
+    document.getElementById('tic-prog').textContent = all.filter(r => r.status === 'progress').length;
+    document.getElementById('tic-done').textContent = all.filter(r => r.status === 'resolved').length;
     document.getElementById('ticket-list').innerHTML = reports.length
       ? reports.map(r => this.renderReportItem(r)).join('')
       : `<div class="empty-state"><p>${this.t('sup.noTickets')}</p></div>`;
@@ -565,13 +588,47 @@ const app = {
       timeline.push({ time: this.t('tic.today'), text: this.t('tic.closed'), dot: '' });
     }
 
+    // Reporter block — shown prominently for staff
+    const reporter = r.reporter;
+    const reporterCard = reporter ? `
+      <div class="card reporter-card">
+        <div class="card-head"><h3>${this.t('tic.reporter')}</h3></div>
+        <div class="reporter-row">
+          <div class="post-avatar">${this.escapeHtml(reporter.avatar || (reporter.name||'?').charAt(0))}</div>
+          <div style="flex:1;min-width:0">
+            <div class="reporter-name">${this.escapeHtml(reporter.name)}</div>
+            <div class="muted">${this.escapeHtml(reporter.ward || '')}</div>
+            ${reporter.phone ? `<div class="reporter-phone">${this.escapeHtml(reporter.phone)}</div>` : ''}
+          </div>
+          ${reporter.phone ? `<a href="tel:${this.escapeHtml(reporter.phone)}" class="tech-call-btn" aria-label="Anrufen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </a>` : ''}
+        </div>
+      </div>` : '';
+
+    // Staff actions: assign self / take ticket
+    const me = this.currentRole();
+    const assignBlock = this.isStaff() ? `
+      <div class="card">
+        <div class="card-head"><h3>${this.t('tic.staffActions')}</h3></div>
+        ${r.assignedTo
+          ? `<p class="muted" style="margin-bottom:10px">${this.t('tic.alreadyAssigned')}: ${this.escapeHtml((techs.find(t => t.id===r.assignedTo)||{}).name || r.assignedTo)}</p>`
+          : `<button class="primary-btn" onclick="app.takeTicket('${r.id}')" style="margin-bottom:8px">${this.t('tic.takeTicket')}</button>`}
+        ${r.status !== 'resolved'
+          ? `<button class="ghost-btn" style="margin-top:0" onclick="app.setTicketStatus('${r.id}','resolved')">${this.t('tic.markResolved')}</button>` : ''}
+      </div>` : '';
+
     document.getElementById('ticket-detail').innerHTML = `
       <div class="ticket-hero">
         <span class="report-status-badge badge-${r.status}">${this.statusLabels[r.status]}</span>
         <h3 style="margin-top:8px;font-size:18px">${this.problemLabels[r.type] || r.type}</h3>
         <div class="muted" style="margin-top:4px">${time} · ID ${r.id.slice(-6)}</div>
-        ${r.note ? `<p style="margin-top:12px;font-size:14px;line-height:1.5">${this.escapeHtml(r.note)}</p>` : ''}
+        ${this.L(r.note) ? `<p style="margin-top:12px;font-size:14px;line-height:1.5">${this.escapeHtml(this.L(r.note))}</p>` : ''}
       </div>
+
+      ${reporterCard}
+
+      ${assignBlock}
 
       <div class="card">
         <div class="card-head"><h3>${this.t('tic.changeStatus')}</h3></div>
@@ -594,12 +651,28 @@ const app = {
         </div>
       </div>
 
-      <div class="card">
+      ${!this.isStaff() ? `<div class="card">
         <div class="card-head"><h3>${this.t('tic.recommendedTech')}</h3></div>
         ${this.renderTechs(techs.slice(0,2))}
-      </div>
+      </div>` : ''}
     `;
     this.showView('ticket');
+  },
+
+  // Staff: assign current ticket to "me" and put it into progress
+  async takeTicket(id) {
+    const reports = await db.getReports();
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    const techs = await db.getTechnicians();
+    const me = techs[0]; // demo: first technician = the logged-in staff member
+    r.assignedTo = me ? me.id : 'self';
+    if (r.status === 'open') r.status = 'progress';
+    r.synced = false;
+    await db.updateReport(r);
+    this.showToast(this.t('tic.taken'));
+    if (navigator.vibrate) navigator.vibrate(40);
+    this.openTicket(id);
   },
 
   async setTicketStatus(id, status) {
@@ -669,7 +742,8 @@ const app = {
 
   // ===== HISTORY =====
   async loadHistory() {
-    const reports = (await db.getReports()).sort((a,b) => b.timestamp - a.timestamp);
+    const all = await db.getReports();
+    const reports = this.filterTicketsForRole(all);
     document.getElementById('history-list').innerHTML = reports.length
       ? reports.map(r => this.renderReportItem(r)).join('')
       : `<div class="empty-state"><p>${this.t('his.empty')}</p></div>`;
@@ -1109,6 +1183,7 @@ const app = {
       this.selectedRole = role;
       document.querySelectorAll('.role-btn').forEach(b => b.classList.toggle('active', b.dataset.role === role));
     }
+    this.applyRoleClass();
     if (language) {
       this.selectedLang = language;
       const li = document.getElementById('setting-language');
@@ -1126,6 +1201,52 @@ const app = {
     document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     this.selectedRole = btn.dataset.role;
+    this.applyRoleClass();
+  },
+
+  // ===== ROLE HELPERS =====
+  currentRole() { return this.selectedRole || 'user'; },
+
+  isStaff() {
+    const r = this.currentRole();
+    return r === 'technician' || r === 'admin';
+  },
+
+  // Filters reports based on role + sorts:
+  //  - user: own tickets first, then community tickets below
+  //  - technician/admin: ALL community tickets sorted by severity then age
+  filterTicketsForRole(reports) {
+    const sevWeight = { high: 0, medium: 1, low: 2 };
+    if (this.isStaff()) {
+      return reports.slice().sort((a, b) => {
+        const sa = a.status === 'resolved' ? 99 : sevWeight[a.severity] ?? 3;
+        const sb = b.status === 'resolved' ? 99 : sevWeight[b.severity] ?? 3;
+        if (sa !== sb) return sa - sb;
+        return b.timestamp - a.timestamp;
+      });
+    }
+    // User: own first, then community
+    return reports.slice().sort((a, b) => {
+      const ao = a.source === 'community' ? 1 : 0;
+      const bo = b.source === 'community' ? 1 : 0;
+      if (ao !== bo) return ao - bo;
+      return b.timestamp - a.timestamp;
+    });
+  },
+
+  applyRoleClass() {
+    document.body.classList.toggle('role-staff', this.isStaff());
+    document.body.classList.toggle('role-technician', this.currentRole() === 'technician');
+    document.body.classList.toggle('role-admin', this.currentRole() === 'admin');
+    const badge = document.getElementById('role-badge');
+    if (badge) {
+      const r = this.currentRole();
+      badge.style.display = r === 'user' ? 'none' : 'inline-flex';
+      const label = r === 'technician' ? this.t('role.technician')
+                  : r === 'admin'      ? this.t('role.admin') : '';
+      const icon = r === 'technician' ? '🔧' : r === 'admin' ? '👑' : '';
+      badge.innerHTML = `<span>${icon}</span><span>${label}</span>`;
+    }
   },
 
   async renderWeather() {
@@ -1230,6 +1351,8 @@ const app = {
       await this.setLang(language);   // applies + re-renders
     } else {
       await this.loadSettings();
+      // Re-render current view so role-based filters update immediately
+      this.showView(this.currentView);
     }
 
     this.showToast(this.t('set.saved'));

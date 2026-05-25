@@ -155,6 +155,13 @@ const I18N = {
   'tic.followup':    { de: 'Folge', en: 'Follow-up', hi: 'अनुवर्ती', ta: 'பின் தொடர்', bn: 'অনুসরণ', te: 'తదుపరి' },
   'tic.today':       { de: 'Heute', en: 'Today', hi: 'आज', ta: 'இன்று', bn: 'আজ', te: 'ఈరోజు' },
   'tic.statusUpdated':{ de: 'Status aktualisiert', en: 'Status updated', hi: 'स्थिति अपडेट', ta: 'நிலை புதுப்பிக்கப்பட்டது', bn: 'স্ট্যাটাস আপডেট', te: 'స్థితి నవీకరించబడింది' },
+  'tic.reporter':    { de: 'Meldung von', en: 'Reported by', hi: 'रिपोर्ट करने वाला', ta: 'புகாரளித்தவர்', bn: 'রিপোর্টার', te: 'నివేదకుడు' },
+  'tic.community':   { de: 'Gemeinde', en: 'Community', hi: 'समुदाय', ta: 'சமூகம்', bn: 'সম্প্রদায়', te: 'సమాజం' },
+  'tic.staffActions':{ de: 'Techniker-Aktionen', en: 'Technician actions', hi: 'तकनीशियन कार्रवाई', ta: 'நிபுணர் செயல்கள்', bn: 'টেকনিশিয়ান ক্রিয়া', te: 'టెక్నీషియన్ చర్యలు' },
+  'tic.takeTicket':  { de: '🤝 Ticket übernehmen', en: '🤝 Take ticket', hi: '🤝 टिकट लें', ta: '🤝 டிக்கெட் ஏற்றுக்கொள்', bn: '🤝 টিকেট নিন', te: '🤝 టికెట్ తీసుకోండి' },
+  'tic.markResolved':{ de: '✓ Als behoben markieren', en: '✓ Mark resolved', hi: '✓ हल चिह्नित करें', ta: '✓ தீர்க்கப்பட்டதாக குறி', bn: '✓ সমাধান চিহ্নিত করুন', te: '✓ పరిష్కరించబడిందిగా గుర్తు' },
+  'tic.alreadyAssigned': { de: 'Bereits zugewiesen', en: 'Already assigned', hi: 'पहले से सौंपा गया', ta: 'ஏற்கனவே ஒதுக்கப்பட்டது', bn: 'ইতিমধ্যে বরাদ্দ', te: 'ఇప్పటికే కేటాయించబడింది' },
+  'tic.taken':       { de: 'Ticket übernommen', en: 'Ticket taken', hi: 'टिकट लिया गया', ta: 'டிக்கெட் ஏற்றுக்கொள்ளப்பட்டது', bn: 'টিকেট নেওয়া হয়েছে', te: 'టికెట్ తీసుకోబడింది' },
 
   // ===== HISTORY =====
   'his.title':       { de: 'Meldungsverlauf', en: 'Report history', hi: 'रिपोर्ट इतिहास', ta: 'அறிக்கை வரலாறு', bn: 'রিপোর্ট ইতিহাস', te: 'నివేదిక చరిత్ర' },
