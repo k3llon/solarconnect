@@ -340,44 +340,61 @@ const app = {
     }
   },
 
+  // Per-session dismissed hints (cleared on reload — fault-style hints can re-trigger)
+  _dismissedHints: new Set(),
+
+  dismissHint(kind) {
+    this._dismissedHints.add(kind);
+    const host = document.getElementById('smart-hint');
+    if (host) { host.classList.add('hidden'); host.innerHTML = ''; }
+  },
+
   // Smart cross-check: weather + sensor + devices
-  // - Weather is bright but sensor underperforms → "check panels (maybe dirty?)"
-  // - Device flagged with note → surface it
+  // Logic:
+  //   - sensor 'fault'     → always show (overrides everything)
+  //   - sensor 'good'/'excellent' → suppress 'dirty' & 'low_yield' (live > static)
+  //   - sensor 'idle'      → night/dark → no yield hint
+  //   - weather bright + sensor < 40% & not idle → 'low_yield'
+  //   - device flagged 'verschmutzt' AND sensor not OK → 'dirty'
   checkSmartHints() {
     const host = document.getElementById('smart-hint');
     if (!host) return;
     const sensor  = (typeof SENSOR !== 'undefined') ? SENSOR.last : null;
-    const weather = this._weatherToday;          // cached from renderWeather
+    const weather = this._weatherToday;
     const devices = this._home && this._home.devices ? this._home.devices : [];
     const dirtyDevice = devices.find(d => d.status === 'warning' && (d.note || '').toLowerCase().includes('verschmut'));
 
-    // Weather solar potential percent (best-effort: from forecast[0] if present)
+    // live sensor status takes priority
+    const sensorOk     = sensor && (sensor.status === 'good' || sensor.status === 'excellent');
+    const sensorIdle   = sensor && sensor.status === 'idle';
+
     let solarPct = null;
     if (weather && this._weatherForecast && this._weatherForecast[0]) {
       solarPct = this._weatherForecast[0].solar;
     }
 
-    let kind = null;        // 'dirty' | 'sensor_fault' | 'low_yield'
-    let title = '', text = '', action = '';
+    let kind = null, title = '', text = '', action = '';
 
     if (sensor && sensor.status === 'fault') {
       kind = 'sensor_fault';
       title = this.t('hint.sensorFaultTitle');
       text  = this.t('hint.sensorFaultText');
       action = `<button class="link-btn" onclick="app.startWizard('panel_damage')">${this.t('hint.openWizard')} →</button>`;
-    } else if (sensor && solarPct != null && solarPct >= 70 && sensor.percent <= 40 && sensor.status !== 'idle') {
+    } else if (!sensorOk && !sensorIdle && sensor && solarPct != null && solarPct >= 70 && sensor.percent <= 40) {
       kind = 'low_yield';
       title = this.t('hint.lowYieldTitle');
       text  = this.t('hint.lowYieldText', { sun: solarPct, prod: sensor.percent });
       action = `<button class="link-btn" onclick="app.openArticle('art_clean')">${this.t('hint.cleanGuide')} →</button>`;
-    } else if (dirtyDevice) {
+    } else if (!sensorOk && !sensorIdle && dirtyDevice) {
       kind = 'dirty';
       title = this.t('hint.dirtyTitle');
       text  = this.t('hint.dirtyText', { name: dirtyDevice.name });
       action = `<button class="link-btn" onclick="app.openArticle('art_clean')">${this.t('hint.cleanGuide')} →</button>`;
     }
 
-    if (!kind) { host.classList.add('hidden'); host.innerHTML = ''; return; }
+    if (!kind || this._dismissedHints.has(kind)) {
+      host.classList.add('hidden'); host.innerHTML = ''; return;
+    }
     host.classList.remove('hidden');
     host.innerHTML = `
       <div class="smart-hint ${kind}">
@@ -387,6 +404,7 @@ const app = {
           <div class="sh-text">${text}</div>
           ${action}
         </div>
+        <button class="sh-close" onclick="app.dismissHint('${kind}')" aria-label="Schließen">×</button>
       </div>`;
   },
 
