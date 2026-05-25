@@ -443,6 +443,29 @@ const CONTENT = {
       synced: true, source: 'community' }
   ],
 
+  // ===== LIVE SOLAR PANELS (6 virtual panels from 1 sensor) =====
+  // Each panel applies a different transform to the same raw sensor value,
+  // so a physical change at the sensor triggers 6 different UI reactions.
+  // factor:  multiplier on calculated watts (1.0 = direct)
+  // invert:  flip the brightness scale (dark sensor → high panel output)
+  // jitter:  randomness ± in % added each tick (realism)
+  // shift:   offset on raw value before mapping (positive = treats as darker)
+  // faultBias: chance (0-1) the panel reports fault even if sensor is OK
+  livePanels: [
+    { id: 'lp_1', location: { de: 'Süd-Dach',          en: 'South roof',     hi: 'दक्षिण छत',    ta: 'தென் கூரை',     bn: 'দক্ষিণ ছাদ',     te: 'దక్షిణ పైకప్పు' },
+      house: 'Hauptgebäude',       factor: 1.00, invert: false, jitter: 5,  shift: 0,   faultBias: 0 },
+    { id: 'lp_2', location: { de: 'Ost-Dach',          en: 'East roof',      hi: 'पूर्व छत',     ta: 'கிழக்கு கூரை',   bn: 'পূর্ব ছাদ',      te: 'తూర్పు పైకప్పు' },
+      house: 'Hauptgebäude',       factor: 0.78, invert: false, jitter: 8,  shift: 30,  faultBias: 0 },
+    { id: 'lp_3', location: { de: 'West-Dach',         en: 'West roof',      hi: 'पश्चिम छत',    ta: 'மேற்கு கூரை',   bn: 'পশ্চিম ছাদ',     te: 'పశ్చిమ పైకప్పు' },
+      house: 'Hauptgebäude',       factor: 0.92, invert: false, jitter: 6,  shift: -20, faultBias: 0 },
+    { id: 'lp_4', location: { de: 'Nord-Dach (Sonderwinkel)', en: 'North roof (special angle)', hi: 'उत्तर छत', ta: 'வடக்கு கூரை', bn: 'উত্তর ছাদ', te: 'ఉత్తర పైకప్పు' },
+      house: 'Schule',             factor: 1.00, invert: true,  jitter: 10, shift: 0,   faultBias: 0 },
+    { id: 'lp_5', location: { de: 'Schul-Dach',        en: 'School roof',    hi: 'स्कूल छत',     ta: 'பள்ளி கூரை',    bn: 'স্কুলের ছাদ',    te: 'పాఠశాల పైకప్పు' },
+      house: 'Schule',             factor: 1.15, invert: false, jitter: 4,  shift: -40, faultBias: 0 },
+    { id: 'lp_6', location: { de: 'Pumpstation',       en: 'Pump station',   hi: 'पंप स्टेशन',   ta: 'பம்ப் நிலையம்',  bn: 'পাম্প স্টেশন',   te: 'పంప్ స్టేషన్' },
+      house: 'Krankenhaus',        factor: 0.65, invert: false, jitter: 12, shift: 80,  faultBias: 0.08 }
+  ],
+
   // ===== MAINTENANCE HISTORY (per device) =====
   maintenanceHistory: [
     { id: 'm_1', deviceId: 'dev_p1', date: Date.now() - 1000*60*60*24*45,  techId: 'tech_3', kind: 'clean',     notes: { de: 'Routine-Reinigung', en: 'Routine cleaning', hi: 'सामान्य सफाई', ta: 'வழக்கமான சுத்தம்', bn: 'নিয়মিত পরিষ্কার', te: 'రొటీన్ శుభ్రపరచడం' } },

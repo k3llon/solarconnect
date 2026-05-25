@@ -1984,33 +1984,38 @@ const app = {
     const meta  = document.getElementById('sensor-meta');
     if (!body) return;
 
-    if (data.status === 'fault') {
-      body.innerHTML = `
-        <div class="sensor-info">
-          <div class="sensor-watts fault">⚠ ${this.t('sensor.fault')}</div>
-          <div class="sensor-label">${this.t('sensor.faultDetail', { v: data.value ?? '—' })}</div>
-          <span class="sensor-status-pill fault">${this.t('sensor.faultBadge')}</span>
-        </div>`;
-    } else {
-      const ringColor = data.status === 'excellent' ? '#1a6b3c'
-                      : data.status === 'good'      ? '#2e9e5e'
-                      : data.status === 'low'       ? '#FB8C00' : '#9e9e9e';
-      const statusLabel = this.t('sensor.tier.' + data.status);
-      body.innerHTML = `
-        <div class="sensor-ring">
-          ${charts.ring({ value: data.percent, size: 86, stroke: 8, color: ringColor, track: 'rgba(0,0,0,0.06)' })}
+    const panels = (CONTENT.livePanels || []);
+    const raw    = data.value;
+
+    // Derive per-panel readings (all from the same sensor value)
+    const derived = panels.map(p => ({ panel: p, reading: SENSOR.derive(raw, p) }));
+
+    // Aggregate stats for the header
+    const totalWatts = derived.reduce((s, x) => s + (x.reading.watts || 0), 0);
+    const faulty     = derived.filter(x => x.reading.status === 'fault').length;
+    const active     = derived.filter(x => x.reading.status === 'good' || x.reading.status === 'excellent').length;
+    const peakSum    = panels.reduce((s, p) => s + SENSOR.PEAK_WATTS * Math.max(1, p.factor || 1), 0);
+    const totalPct   = Math.round((totalWatts / peakSum) * 100);
+
+    body.innerHTML = `
+      <div class="sensor-total">
+        <div class="st-left">
+          <div class="st-watts">${totalWatts.toLocaleString('de-DE')}<span class="unit">W</span></div>
+          <div class="st-label">${this.t('sensor.totalProd')} · ${panels.length} ${this.t('sensor.panels')}</div>
         </div>
-        <div class="sensor-info">
-          <div class="sensor-watts${data.status==='idle'?' idle':''}">${data.watts}<span class="unit">W</span></div>
-          <div class="sensor-label">${this.t('sensor.currentProd')}</div>
-          <span class="sensor-status-pill ${data.status}">${statusLabel}</span>
-        </div>`;
-    }
+        <div class="st-right">
+          <div class="st-mini ok">${active}/${panels.length} ${this.t('sensor.ok')}</div>
+          ${faulty > 0 ? `<div class="st-mini fault">${faulty} ${this.t('sensor.faulty')}</div>` : ''}
+        </div>
+      </div>
+      <div class="panel-grid">
+        ${derived.map(({ panel, reading }) => this.renderPanelTile(panel, reading)).join('')}
+      </div>`;
 
     if (spark && data.history && data.history.length > 1) {
       spark.innerHTML = charts.line({
-        data: data.history,
-        height: 50, max: SENSOR.PEAK_WATTS, min: 0,
+        data: data.history, height: 50,
+        max: SENSOR.PEAK_WATTS, min: 0,
         color: data.status === 'fault' ? '#e53935' : '#FFB300', fill: true
       });
     } else if (spark) {
@@ -2018,12 +2023,34 @@ const app = {
     }
 
     if (meta) {
-      const ago  = this.timeAgo(data.timestamp);
-      const raw  = data.value != null ? data.value : '—';
+      const ago = this.timeAgo(data.timestamp);
+      const rawStr = raw != null ? raw : '—';
       meta.innerHTML = `
-        <span>${this.t('sensor.raw')}: <strong>${raw}</strong></span>
+        <span>${this.t('sensor.raw')}: <strong>${rawStr}</strong></span>
         <span>${this.t('sensor.updated')}: ${ago}</span>`;
     }
+  },
+
+  renderPanelTile(panel, r) {
+    const status = r.status;
+    const ringColor = status === 'excellent' ? '#1a6b3c'
+                    : status === 'good'      ? '#2e9e5e'
+                    : status === 'low'       ? '#FB8C00'
+                    : status === 'fault'     ? '#e53935' : '#9e9e9e';
+    const tierLabel = status === 'fault' ? this.t('sensor.faulty') : this.t('sensor.tier.' + status);
+    return `<div class="panel-tile tile-${status}">
+      <div class="pt-head">
+        <span class="pt-name">${this.escapeHtml(this.L(panel.location))}</span>
+        ${panel.invert ? `<span class="pt-flag" title="Invertiert">⇅</span>` : ''}
+      </div>
+      <div class="pt-ring">
+        ${charts.ring({ value: Math.min(100, Math.max(0, r.percent)), size: 60, stroke: 6, color: ringColor, track: 'rgba(0,0,0,0.06)' })}
+      </div>
+      ${status === 'fault'
+        ? `<div class="pt-watts fault">⚠ ${this.t('sensor.fault')}</div>`
+        : `<div class="pt-watts">${r.watts}<span class="unit">W</span></div>`}
+      <div class="pt-tier ${status}">${tierLabel}</div>
+    </div>`;
   },
 
   renderSensorError(err) {

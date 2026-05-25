@@ -403,7 +403,7 @@ const I18N = {
   'misc.dAgo':       { de: 'vor {n} Tg', en: '{n} d ago', hi: '{n} दिन पहले', ta: '{n} நாள் முன்', bn: '{n} দিন আগে', te: '{n} రో క్రితం' },
 
   // ===== LIVE SENSOR =====
-  'sensor.title':       { de: 'Live-Solarpanel', en: 'Live solar panel', hi: 'लाइव सोलर पैनल', ta: 'நேரடி சோலார் பேனல்', bn: 'লাইভ সোলার প্যানেল', te: 'లైవ్ సోలార్ ప్యానెల్' },
+  'sensor.title':       { de: 'Solar-Panels Live', en: 'Solar panels live', hi: 'सोलर पैनल लाइव', ta: 'சோலார் பேனல்கள் நேரடி', bn: 'সোলার প্যানেল লাইভ', te: 'సోలార్ ప్యానెల్‌లు లైవ్' },
   'sensor.live':        { de: 'LIVE', en: 'LIVE', hi: 'लाइव', ta: 'நேரடி', bn: 'লাইভ', te: 'లైవ్' },
   'sensor.loading':     { de: 'Verbinde mit Sensor…', en: 'Connecting to sensor…', hi: 'सेंसर से कनेक्ट…', ta: 'சென்சருடன் இணைகிறது…', bn: 'সেন্সরে সংযোগ…', te: 'సెన్సర్‌కు కనెక్ట్…' },
   'sensor.currentProd': { de: 'Aktuelle Erzeugung', en: 'Current production', hi: 'वर्तमान उत्पादन', ta: 'தற்போதைய உற்பத்தி', bn: 'বর্তমান উৎপাদন', te: 'ప్రస్తుత ఉత్పత్తి' },
@@ -421,6 +421,10 @@ const I18N = {
   'sensor.tier.idle':      { de: 'Sehr dunkel / Nacht', en: 'Very dark / night', hi: 'बहुत अंधेरा / रात', ta: 'மிக இருட்டு / இரவு', bn: 'খুব অন্ধকার / রাত', te: 'చాలా చీకటి / రాత్రి' },
   'sensor.alertTitle':  { de: 'Panel-Sensor meldet Defekt', en: 'Panel sensor reports fault', hi: 'पैनल सेंसर त्रुटि', ta: 'பேனல் சென்சர் கோளாறு', bn: 'প্যানেল সেন্সর ত্রুটি', te: 'ప్యానెల్ సెన్సర్ లోపం' },
   'sensor.alertText':   { de: 'Wert {v} liegt unter dem Schwellwert. Bitte Panel und Verkabelung prüfen.', en: 'Value {v} below threshold. Check panel and wiring.', hi: 'मान {v} सीमा से कम। पैनल और तार जाँचें।', ta: 'மதிப்பு {v} வரம்புக்கு கீழ். பேனல்/கம்பி சரிபார்.', bn: 'মান {v} সীমার নিচে। প্যানেল ও তার চেক।', te: 'విలువ {v} ప్రవేశం కింద. ప్యానెల్ & వైరింగ్ తనిఖీ.' },
+  'sensor.totalProd':   { de: 'Gesamt-Erzeugung', en: 'Total production', hi: 'कुल उत्पादन', ta: 'மொத்த உற்பத்தி', bn: 'মোট উৎপাদন', te: 'మొత్తం ఉత్పత్తి' },
+  'sensor.panels':      { de: 'Panels', en: 'panels', hi: 'पैनल', ta: 'பேனல்கள்', bn: 'প্যানেল', te: 'ప్యానెల్‌లు' },
+  'sensor.ok':          { de: 'OK', en: 'OK', hi: 'ठीक', ta: 'சரி', bn: 'ঠিক', te: 'సరి' },
+  'sensor.faulty':      { de: 'defekt', en: 'faulty', hi: 'खराब', ta: 'கோளாறு', bn: 'ত্রুটিপূর্ণ', te: 'లోపం' },
 
   // ===== WEATHER day names =====
   'wd.today':  { de: 'Heute',     en: 'Today',  hi: 'आज',        ta: 'இன்று',  bn: 'আজ',    te: 'ఈరోజు' },

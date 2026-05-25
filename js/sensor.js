@@ -102,6 +102,52 @@ const SENSOR = {
     return 'idle';
   },
 
+  // Derive a per-panel reading from the same raw sensor value.
+  // Different transforms ensure a single physical sensor change produces
+  // 6 visibly distinct UI reactions across the panel grid.
+  derive(rawValue, panel) {
+    if (rawValue == null || isNaN(rawValue)) {
+      return { value: null, status: 'fault', watts: 0, percent: 0 };
+    }
+    // Random fault simulation
+    if (panel.faultBias && Math.random() < panel.faultBias) {
+      return { value: rawValue, status: 'fault', watts: 0, percent: 0 };
+    }
+
+    // 1. Apply shift to raw value (treats sensor as lighter/darker)
+    let v = rawValue + (panel.shift || 0);
+    // 2. Invert if requested (dark sensor → high panel output)
+    if (panel.invert) {
+      v = this.BRIGHT + this.DARK - v;
+    }
+    // 3. Clamp & map to watts
+    v = Math.max(this.BRIGHT, Math.min(this.DARK, v));
+    let watts = this._toWatts(v);
+
+    // 4. Apply per-panel multiplier
+    watts = watts * (panel.factor || 1.0);
+
+    // 5. Add jitter (deterministic per panel id + minute, so it's stable across re-renders within ~30s)
+    if (panel.jitter) {
+      const seedBase = (panel.id || '').split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+      const minuteBucket = Math.floor(Date.now() / 30000);
+      const noise = ((Math.sin(seedBase * 13 + minuteBucket) + 1) / 2) * 2 - 1;  // -1..1
+      watts *= 1 + (noise * panel.jitter / 100);
+    }
+
+    watts = Math.max(0, Math.round(watts));
+    // Each panel has its own peak (slight variations look more realistic)
+    const peak = this.PEAK_WATTS * (panel.factor >= 1 ? panel.factor : 1);
+    const percent = Math.round((watts / peak) * 100);
+
+    // Faulted sensor still means panel is uncertain — for invert panels the opposite
+    if (rawValue < this.FAULT && !panel.invert) {
+      return { value: rawValue, status: 'fault', watts: 0, percent: 0 };
+    }
+
+    return { value: rawValue, status: this._tier(percent), watts, percent };
+  },
+
   // ---- Polling ----
   start(onUpdate) {
     this.stop();
