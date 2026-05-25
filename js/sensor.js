@@ -5,9 +5,10 @@
 //   < 30 → sensor fault
 
 const SENSOR = {
-  channel: 3393403,
-  readKey: 'VXF11H3Z3KTRFLM8',
-  endpoint: 'https://api.thingspeak.com/channels/3393403/feeds.json',
+  // Goes through the Vercel serverless proxy in production AND local dev
+  // (locally falls back to direct ThingSpeak if /api/sensor is not available).
+  PROXY: '/api/sensor',
+  FALLBACK: 'https://api.thingspeak.com/channels/3393403/feeds.json?api_key=VXF11H3Z3KTRFLM8',
 
   // Mapping bounds — defines the "solar" semantics
   BRIGHT: 30,           // anything <= this is full power
@@ -17,14 +18,34 @@ const SENSOR = {
   POLL_MS: 20000,       // 20 s refresh
 
   _timer: null,
-  last: null,           // { value, status, watts, kwh, percent, timestamp, history }
+  _useFallback: false,
+  last: null,
 
   // ---- Fetch ----
   async fetchLatest(n = 20) {
-    const url = `${this.endpoint}?api_key=${this.readKey}&results=${n}`;
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('ThingSpeak HTTP ' + res.status);
-    const json = await res.json();
+    let json;
+    if (!this._useFallback) {
+      try {
+        const r = await fetch(`${this.PROXY}?results=${n}`, { cache: 'no-store' });
+        if (r.ok) {
+          json = await r.json();
+        } else if (r.status === 404) {
+          // No serverless function available (e.g. plain static server) → fallback
+          this._useFallback = true;
+        } else {
+          throw new Error('Proxy HTTP ' + r.status);
+        }
+      } catch (err) {
+        // network or other → try fallback once
+        console.warn('[sensor] proxy failed, falling back:', err.message);
+        this._useFallback = true;
+      }
+    }
+    if (this._useFallback) {
+      const r = await fetch(`${this.FALLBACK}&results=${n}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error('ThingSpeak HTTP ' + r.status);
+      json = await r.json();
+    }
     const feeds = (json.feeds || []).filter(f => f.field1 != null);
     if (!feeds.length) throw new Error('No feed data');
 

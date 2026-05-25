@@ -89,14 +89,35 @@ const Weather = {
     });
   },
 
+  // Versucht zuerst Vercel-Function (/api/weather). Bei 404 (lokal ohne Functions)
+  // fällt es auf den alten Client-Side-Pfad mit localStorage-Key zurück.
   async fetchLive() {
-    if (!this.apiKey()) throw new Error('Kein API-Key — bitte in Einstellungen speichern');
     if (!navigator.onLine) throw new Error('Offline');
 
     const community = (await db.getSetting('community_name')) || 'Khandala';
-    const state = (await db.getSetting('state')) || 'Maharashtra';
-    const coords = await this.geocode(community, state);
+    const state     = (await db.getSetting('state'))          || 'Maharashtra';
 
+    // 1) Serverless proxy
+    try {
+      const r = await fetch(`/api/weather?community=${encodeURIComponent(community)}&state=${encodeURIComponent(state)}`);
+      if (r.ok) {
+        const payload = await r.json();
+        payload.fetchedAt = payload.fetchedAt || Date.now();
+        localStorage.setItem(this.CACHE_KEY, JSON.stringify(payload));
+        return payload;
+      }
+      if (r.status !== 404) {
+        const errJson = await r.json().catch(() => ({}));
+        throw new Error(errJson.error || `Wetter-API (HTTP ${r.status})`);
+      }
+      // 404 → no function → fall through to client-side
+    } catch (err) {
+      if (!/HTTP 404|Failed to fetch/.test(err.message || '')) throw err;
+    }
+
+    // 2) Client-side fallback (lokaler Static-Server, ohne Vercel)
+    if (!this.apiKey()) throw new Error('Kein API-Key — bitte in Einstellungen speichern (oder auf Vercel deployen)');
+    const coords = await this.geocode(community, state);
     const base = `lat=${coords.lat}&lon=${coords.lon}&appid=${this.apiKey()}&units=metric&lang=de`;
     const [curR, fcR] = await Promise.all([
       fetch(`https://api.openweathermap.org/data/2.5/weather?${base}`),
@@ -120,7 +141,6 @@ const Weather = {
       sunset: cur.sys?.sunset
     };
     const forecast = this.aggregateForecast(fc.list);
-
     const payload = { today, forecast, fetchedAt: Date.now(), city: coords.name };
     localStorage.setItem(this.CACHE_KEY, JSON.stringify(payload));
     return payload;

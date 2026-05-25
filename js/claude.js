@@ -24,6 +24,18 @@ const Claude = {
 
   apiKey() { return localStorage.getItem('claude_api_key') || ''; },
 
+  // Wahr, sobald wir wissen dass /api/claude existiert (Vercel) — dann kein User-Key nötig
+  _proxyAvailable: null,
+  async checkProxy() {
+    if (this._proxyAvailable !== null) return this._proxyAvailable;
+    try {
+      // HEAD/OPTIONS auf /api/claude — wir erwarten 204 (OPTIONS) oder 405
+      const r = await fetch('/api/claude', { method: 'OPTIONS' });
+      this._proxyAvailable = r.ok || r.status === 204 || r.status === 405;
+    } catch { this._proxyAvailable = false; }
+    return this._proxyAvailable;
+  },
+
   // ===== INIT / RENDER =====
   init() {
     try { this.history = JSON.parse(localStorage.getItem(this.HISTORY_KEY) || '[]'); }
@@ -209,12 +221,13 @@ const Claude = {
   },
 
   // Von der Home-Quick-Chat-Karte: übernehme Text, wechsle zur Vollansicht, sende
-  sendFromHome() {
+  async sendFromHome() {
     const input = document.getElementById('home-claude-input');
     const text = (input?.value || '').trim();
     if (!text && !this.pending.length) return;
 
-    if (!this.apiKey()) {
+    const hasProxy = await this.checkProxy();
+    if (!hasProxy && !this.apiKey()) {
       alert('Bitte zuerst in den Einstellungen einen Anthropic API-Key hinterlegen.');
       app.showView('settings');
       return;
@@ -240,7 +253,8 @@ const Claude = {
     const text = (input.value || '').trim();
     if (!text && !this.pending.length) return;
 
-    if (!this.apiKey()) {
+    const hasProxy = await this.checkProxy();
+    if (!hasProxy && !this.apiKey()) {
       alert('Bitte zuerst in den Einstellungen einen Anthropic API-Key hinterlegen.');
       app.showView('settings');
       return;
@@ -289,9 +303,8 @@ const Claude = {
     if (send) send.disabled = on;
   },
 
-  // API-Aufruf — direkt von Browser (mit dangerous-direct-browser-Header)
+  // API-Aufruf — bevorzugt /api/claude (Vercel), fallback auf direct browser
   async callApi() {
-    // Verlauf in Anthropic-Format konvertieren
     const messages = this.history.map(m => ({
       role: m.role,
       content: typeof m.content === 'string'
@@ -306,22 +319,32 @@ const Claude = {
       messages
     };
 
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': this.apiKey(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify(body)
-    });
+    const hasProxy = await this.checkProxy();
+    let r;
+    if (hasProxy) {
+      r = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } else {
+      r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': this.apiKey(),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify(body)
+      });
+    }
 
     if (!r.ok) {
       let detail = `HTTP ${r.status}`;
       try {
         const j = await r.json();
-        detail = j.error?.message || JSON.stringify(j);
+        detail = j.error?.message || j.error || JSON.stringify(j);
       } catch {}
       throw new Error(detail);
     }

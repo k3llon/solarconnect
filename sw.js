@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solarconnect-v7';
+const CACHE_NAME = 'solarconnect-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -32,8 +32,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  // Never cache ThingSpeak — always live
-  if (url.hostname === 'api.thingspeak.com') {
+  // Never cache any live API (own /api/* proxies or third-party live sources)
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.hostname === 'api.thingspeak.com' ||
+    url.hostname === 'api.openweathermap.org' ||
+    url.hostname === 'api.anthropic.com'
+  ) {
     event.respondWith(fetch(event.request));
     return;
   }
