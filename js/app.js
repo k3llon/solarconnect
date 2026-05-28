@@ -297,8 +297,11 @@ const app = {
     setTimeout(() => this.startTour(), 700);
   },
 
+  _tourScrolledForStep: -1,   // remembers which step we already scrolled for
+
   startTour() {
     this._tourStep = 0;
+    this._tourScrolledForStep = -1;
     this.renderTourStep();
   },
 
@@ -308,15 +311,31 @@ const app = {
     if (!step) return this.endTour(true);
 
     const el = document.querySelector(step.target);
-    if (!el) {                          // target missing → skip step
+    if (!el) {
+      // target missing → skip step (with iteration safety)
       this._tourStep++;
+      if (this._tourStep >= this.TOUR_STEPS.length) return this.endTour(false);
       return this.renderTourStep();
     }
+
     const rect = el.getBoundingClientRect();
     const scrollY = window.scrollY;
+    const needsScroll = rect.top < 60 || rect.bottom > window.innerHeight - 200;
+
+    // Scroll AT MOST ONCE per step to prevent infinite render loop
+    if (needsScroll && this._tourScrolledForStep !== this._tourStep) {
+      this._tourScrolledForStep = this._tourStep;
+      const targetY = scrollY + rect.top - 100;
+      window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+      setTimeout(() => this.renderTourStep(), 420);
+      return;  // wait, do not paint overlay yet
+    }
 
     const total = this.TOUR_STEPS.length;
     const isLast = this._tourStep === total - 1;
+    const tipY = step.placement === 'bottom'
+      ? rect.bottom + scrollY + 14
+      : Math.max(20, rect.top + scrollY - 12);
     const overlay = document.createElement('div');
     overlay.id = 'tour-overlay';
     overlay.innerHTML = `
@@ -326,7 +345,7 @@ const app = {
         width:${rect.width + 12}px;
         height:${rect.height + 12}px;"></div>
       <div class="tour-tip ${step.placement}" style="
-        top:${(step.placement === 'bottom' ? rect.bottom + scrollY + 14 : rect.top + scrollY - 12)}px;
+        top:${tipY}px;
         left:${Math.max(12, Math.min(window.innerWidth - 312, rect.left + rect.width/2 - 150))}px;">
         <div class="tour-step">${this._tourStep + 1} / ${total}</div>
         <div class="tour-title">${this.t(step.titleKey)}</div>
@@ -337,23 +356,20 @@ const app = {
         </div>
       </div>`;
     document.body.appendChild(overlay);
-    // Scroll target into view if needed
-    if (rect.top < 60 || rect.bottom > window.innerHeight - 100) {
-      window.scrollTo({ top: rect.top + scrollY - 100, behavior: 'smooth' });
-      setTimeout(() => this.renderTourStep(), 350); // re-position after scroll
-      overlay.style.opacity = '0.0';
-    }
   },
 
   tourNext() {
     this._tourStep++;
+    this._tourScrolledForStep = -1;          // reset scroll-guard for the next step
     if (this._tourStep >= this.TOUR_STEPS.length) return this.endTour(true);
     this.renderTourStep();
   },
 
   async endTour(completed) {
     document.getElementById('tour-overlay')?.remove();
-    await db.setSetting('tour_done', true);
+    this._tourStep = 0;
+    this._tourScrolledForStep = -1;
+    await db.setSetting('tour_done', true);   // always mark done so a stuck tour never reappears
     if (completed) this.showToast(this.t('tour.thanks'));
   },
 
